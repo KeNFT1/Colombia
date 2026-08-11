@@ -504,9 +504,70 @@ textarea {
   gap: 12px;
 }
 
+.form-grid.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
 form {
   display: grid;
   gap: 12px;
+}
+
+.inline-form {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #eeeeea;
+}
+
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 1px solid #dfe2dc;
+  border-radius: 10px;
+  background: #fbfbf8;
+  font-size: 12px;
+}
+
+.check-row input {
+  width: auto;
+}
+
+.edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.edit-row select,
+.edit-row input {
+  width: auto;
+  min-width: 118px;
+  max-width: 190px;
+  padding-block: 7px;
+}
+
+.edit-row input[type='number'] {
+  max-width: 94px;
+}
+
+.single {
+  grid-template-columns: 1fr;
+}
+
+.section-gap {
+  margin-top: 14px;
 }
 
 .next-action,
@@ -610,11 +671,19 @@ meter {
 
   .step-row,
   .form-grid,
+  .form-grid.compact,
   .case-row,
   .roster-grid,
   .shelter-grid,
-  .need-row {
+  .need-row,
+  .check-grid {
     grid-template-columns: 1fr;
+  }
+
+  .edit-row select,
+  .edit-row input {
+    width: 100%;
+    max-width: none;
   }
 
   nav {

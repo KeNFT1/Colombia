@@ -47,34 +47,46 @@ type Caso = {
 }
 
 type Voluntario = {
+  id: string
   nombre: string
   base: string
+  rol: 'coordinador' | 'verificador' | 'voluntario'
   habilidades: Necesidad[]
   disponibilidad: string
   turno: string
+  estado: 'disponible' | 'asignado' | 'descanso'
+  contacto: string
 }
 
 type Recurso = {
+  id: string
   nombre: string
   tipo: Necesidad
   ubicacion: string
   cantidad: string
-  estado: 'disponible' | 'en ruta' | 'reservado'
+  estado: 'disponible' | 'en ruta' | 'reservado' | 'agotado'
+  responsable: string
 }
 
 type Albergue = {
+  id: string
   nombre: string
   municipio: string
   capacidad: number
   ocupacion: number
   necesidades: Necesidad[]
+  estado: 'abierto' | 'casi lleno' | 'lleno'
+  responsable: string
 }
 
 type Persona = {
+  id: string
   etiqueta: string
   municipio: string
   estado: 'sin confirmar' | 'a salvo' | 'requiere ayuda'
   ultimaNota: string
+  contacto: string
+  actualizado: string
 }
 
 type Asignacion = {
@@ -183,65 +195,87 @@ const casosBase: Caso[] = [
   },
 ]
 
-const voluntarios: Voluntario[] = [
-  { nombre: 'Brigada médica occidente', base: 'Cali', habilidades: ['medica', 'transporte'], disponibilidad: '24 h', turno: 'Noche' },
-  { nombre: 'Célula albergues alfa', base: 'Cali', habilidades: ['albergue', 'alimentos', 'agua'], disponibilidad: '18 personas', turno: 'Mañana' },
-  { nombre: 'Equipo radio Quibdó', base: 'Quibdó', habilidades: ['comunicaciones'], disponibilidad: '6 kits radio', turno: 'Ahora' },
-  { nombre: 'Logística norte', base: 'Manizales', habilidades: ['agua', 'alimentos', 'transporte'], disponibilidad: '2 camiones', turno: 'Ahora' },
-  { nombre: 'Cuadrilla eje cafetero', base: 'Pereira', habilidades: ['escombros', 'albergue'], disponibilidad: 'en espera', turno: 'Madrugada' },
+const voluntariosBase: Voluntario[] = [
+  { id: 'EQ-001', nombre: 'Brigada médica occidente', base: 'Cali', rol: 'coordinador', habilidades: ['medica', 'transporte'], disponibilidad: '24 h', turno: 'Noche', estado: 'asignado', contacto: 'radio salud' },
+  { id: 'EQ-002', nombre: 'Célula albergues alfa', base: 'Cali', rol: 'coordinador', habilidades: ['albergue', 'alimentos', 'agua'], disponibilidad: '18 personas', turno: 'Mañana', estado: 'asignado', contacto: 'mesa albergues' },
+  { id: 'EQ-003', nombre: 'Equipo radio Quibdó', base: 'Quibdó', rol: 'verificador', habilidades: ['comunicaciones'], disponibilidad: '6 kits radio', turno: 'Ahora', estado: 'asignado', contacto: 'canal VHF 3' },
+  { id: 'EQ-004', nombre: 'Logística norte', base: 'Manizales', rol: 'voluntario', habilidades: ['agua', 'alimentos', 'transporte'], disponibilidad: '2 camiones', turno: 'Ahora', estado: 'disponible', contacto: 'despacho logístico' },
+  { id: 'EQ-005', nombre: 'Cuadrilla eje cafetero', base: 'Pereira', rol: 'voluntario', habilidades: ['escombros', 'albergue'], disponibilidad: 'en espera', turno: 'Madrugada', estado: 'disponible', contacto: 'bomberos despacho' },
 ]
 
-const recursos: Recurso[] = [
-  { nombre: 'Kits de trauma', tipo: 'medica', ubicacion: 'Cali', cantidad: '14 cajas', estado: 'en ruta' },
-  { nombre: 'Agua potable', tipo: 'agua', ubicacion: 'Manizales', cantidad: '5.000 L', estado: 'disponible' },
-  { nombre: 'Carpas familiares', tipo: 'albergue', ubicacion: 'Cali', cantidad: '120 uds', estado: 'reservado' },
-  { nombre: 'Radios VHF', tipo: 'comunicaciones', ubicacion: 'Quibdó', cantidad: '6 kits', estado: 'disponible' },
-  { nombre: 'Retroexcavadora', tipo: 'escombros', ubicacion: 'Pereira', cantidad: '1 unidad', estado: 'reservado' },
+const recursosBase: Recurso[] = [
+  { id: 'INV-001', nombre: 'Kits de trauma', tipo: 'medica', ubicacion: 'Cali', cantidad: '14 cajas', estado: 'en ruta', responsable: 'Coordinación salud' },
+  { id: 'INV-002', nombre: 'Agua potable', tipo: 'agua', ubicacion: 'Manizales', cantidad: '5.000 L', estado: 'disponible', responsable: 'Logística norte' },
+  { id: 'INV-003', nombre: 'Carpas familiares', tipo: 'albergue', ubicacion: 'Cali', cantidad: '120 uds', estado: 'reservado', responsable: 'Mesa albergues' },
+  { id: 'INV-004', nombre: 'Radios VHF', tipo: 'comunicaciones', ubicacion: 'Quibdó', cantidad: '6 kits', estado: 'disponible', responsable: 'Comunicaciones' },
+  { id: 'INV-005', nombre: 'Retroexcavadora', tipo: 'escombros', ubicacion: 'Pereira', cantidad: '1 unidad', estado: 'reservado', responsable: 'Bomberos despacho' },
 ]
 
-const albergues: Albergue[] = [
-  { nombre: 'Gimnasio escolar norte', municipio: 'Manizales', capacidad: 180, ocupacion: 96, necesidades: ['agua', 'alimentos'] },
-  { nombre: 'Coliseo comunal sur', municipio: 'Cali', capacidad: 420, ocupacion: 311, necesidades: ['albergue', 'agua', 'comunicaciones'] },
-  { nombre: 'Centro parroquial', municipio: 'Quibdó', capacidad: 95, ocupacion: 54, necesidades: ['alimentos', 'comunicaciones'] },
+const alberguesBase: Albergue[] = [
+  { id: 'ALB-001', nombre: 'Gimnasio escolar norte', municipio: 'Manizales', capacidad: 180, ocupacion: 96, necesidades: ['agua', 'alimentos'], estado: 'abierto', responsable: 'Gestión del riesgo municipal' },
+  { id: 'ALB-002', nombre: 'Coliseo comunal sur', municipio: 'Cali', capacidad: 420, ocupacion: 311, necesidades: ['albergue', 'agua', 'comunicaciones'], estado: 'casi lleno', responsable: 'Mesa albergues' },
+  { id: 'ALB-003', nombre: 'Centro parroquial', municipio: 'Quibdó', capacidad: 95, ocupacion: 54, necesidades: ['alimentos', 'comunicaciones'], estado: 'abierto', responsable: 'Enlace parroquial' },
 ]
 
-const personas: Persona[] = [
-  { etiqueta: 'Grupo familiar A', municipio: 'Cali', estado: 'a salvo', ultimaNota: 'Registrado en mesa de albergue.' },
-  { etiqueta: 'Grupo familiar B', municipio: 'San José del Palmar', estado: 'sin confirmar', ultimaNota: 'Último reporte cerca de plaza central.' },
-  { etiqueta: 'Lista traslado pacientes', municipio: 'Pereira', estado: 'requiere ayuda', ultimaNota: 'Pendiente confirmación de ambulancia.' },
+const personasBase: Persona[] = [
+  { id: 'PER-001', etiqueta: 'Grupo familiar A', municipio: 'Cali', estado: 'a salvo', ultimaNota: 'Registrado en mesa de albergue.', contacto: 'mesa de albergue', actualizado: '10:02 p. m.' },
+  { id: 'PER-002', etiqueta: 'Grupo familiar B', municipio: 'San José del Palmar', estado: 'sin confirmar', ultimaNota: 'Último reporte cerca de plaza central.', contacto: 'enlace comunitario', actualizado: '9:48 p. m.' },
+  { id: 'PER-003', etiqueta: 'Lista traslado pacientes', municipio: 'Pereira', estado: 'requiere ayuda', ultimaNota: 'Pendiente confirmación de ambulancia.', contacto: 'bomberos despacho', actualizado: '9:33 p. m.' },
 ]
 
-const asignaciones: Asignacion[] = [
+const asignacionesBase: Asignacion[] = [
   { id: 'ASG-01', casoId: 'COL-001', equipo: 'Brigada médica occidente', estado: 'en ruta', eta: '35 min', responsable: 'Coordinación salud' },
   { id: 'ASG-02', casoId: 'COL-002', equipo: 'Célula albergues alfa', estado: 'en sitio', eta: '0 min', responsable: 'Mesa albergues' },
   { id: 'ASG-03', casoId: 'COL-004', equipo: 'Equipo radio Quibdó', estado: 'aceptado', eta: '50 min', responsable: 'Comunicaciones' },
 ]
 
-const solicitudes: Solicitud[] = [
+const solicitudesBase: Solicitud[] = [
   { id: 'REQ-01', casoId: 'COL-001', item: 'Kits de trauma', cantidad: '20', entregado: '14', punto: 'Hospital local', estado: 'comprometida' },
   { id: 'REQ-02', casoId: 'COL-002', item: 'Carpas familiares', cantidad: '160', entregado: '120', punto: 'Coliseo comunal sur', estado: 'abierta' },
   { id: 'REQ-03', casoId: 'COL-005', item: 'Agua potable', cantidad: '5.000 L', entregado: '5.000 L', punto: 'Gimnasio escolar norte', estado: 'cubierta' },
 ]
 
-function leerCasos() {
-  const guardado = localStorage.getItem('colombia-relief-router-cases')
-  if (!guardado) return casosBase
+function leerColeccion<T>(clave: string, base: T[]) {
+  const guardado = localStorage.getItem(clave)
+  if (!guardado) return base
   try {
-    return JSON.parse(guardado) as Caso[]
+    return JSON.parse(guardado) as T[]
   } catch {
-    return casosBase
+    return base
   }
 }
 
-function guardarCasos(registros: Caso[]) {
-  localStorage.setItem('colombia-relief-router-cases', JSON.stringify(registros))
+function guardarColeccion<T>(clave: string, registros: T[]) {
+  localStorage.setItem(clave, JSON.stringify(registros))
+}
+
+const claves = {
+  casos: 'colombia-relief-router-cases',
+  voluntarios: 'colombia-relief-router-teams',
+  recursos: 'colombia-relief-router-resources',
+  albergues: 'colombia-relief-router-shelters',
+  personas: 'colombia-relief-router-people',
+  asignaciones: 'colombia-relief-router-assignments',
+  solicitudes: 'colombia-relief-router-requests',
+}
+
+const horaCorta = () => new Date().toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
+
+function siguienteId(prefijo: string, existentes: { id: string }[]) {
+  return `${prefijo}-${String(existentes.length + 1).padStart(3, '0')}`
 }
 
 function App() {
   const [vista, setVista] = useState<Vista>('inicio')
   const [filtro, setFiltro] = useState<Filtro>('todas')
   const [busqueda, setBusqueda] = useState('')
-  const [casos, setCasos] = useState<Caso[]>(leerCasos)
+  const [casos, setCasos] = useState<Caso[]>(() => leerColeccion(claves.casos, casosBase))
+  const [voluntarios, setVoluntarios] = useState<Voluntario[]>(() => leerColeccion(claves.voluntarios, voluntariosBase))
+  const [recursos, setRecursos] = useState<Recurso[]>(() => leerColeccion(claves.recursos, recursosBase))
+  const [albergues, setAlbergues] = useState<Albergue[]>(() => leerColeccion(claves.albergues, alberguesBase))
+  const [personas, setPersonas] = useState<Persona[]>(() => leerColeccion(claves.personas, personasBase))
+  const [asignaciones, setAsignaciones] = useState<Asignacion[]>(() => leerColeccion(claves.asignaciones, asignacionesBase))
+  const [solicitudes, setSolicitudes] = useState<Solicitud[]>(() => leerColeccion(claves.solicitudes, solicitudesBase))
   const [formulario, setFormulario] = useState({
     municipio: '',
     departamento: '',
@@ -251,6 +285,47 @@ function App() {
     contacto: '',
     coordenadas: '',
     notas: '',
+  })
+  const [nuevoVoluntario, setNuevoVoluntario] = useState({
+    nombre: '',
+    base: '',
+    rol: 'voluntario' as Voluntario['rol'],
+    habilidades: ['agua'] as Necesidad[],
+    disponibilidad: '',
+    turno: 'Ahora',
+    estado: 'disponible' as Voluntario['estado'],
+    contacto: '',
+  })
+  const [nuevoRecurso, setNuevoRecurso] = useState({
+    nombre: '',
+    tipo: 'agua' as Necesidad,
+    ubicacion: '',
+    cantidad: '',
+    estado: 'disponible' as Recurso['estado'],
+    responsable: '',
+  })
+  const [nuevoAlbergue, setNuevoAlbergue] = useState({
+    nombre: '',
+    municipio: '',
+    capacidad: 50,
+    ocupacion: 0,
+    necesidades: ['agua'] as Necesidad[],
+    estado: 'abierto' as Albergue['estado'],
+    responsable: '',
+  })
+  const [nuevaPersona, setNuevaPersona] = useState({
+    etiqueta: '',
+    municipio: '',
+    estado: 'sin confirmar' as Persona['estado'],
+    ultimaNota: '',
+    contacto: '',
+  })
+  const [nuevaAsignacion, setNuevaAsignacion] = useState({
+    casoId: '',
+    equipo: '',
+    estado: 'aceptado' as Asignacion['estado'],
+    eta: '30 min',
+    responsable: '',
   })
 
   const abiertos = casos.filter((caso) => caso.estado !== 'resuelto')
@@ -282,11 +357,11 @@ function App() {
       ...formulario,
       personas: Number(formulario.personas),
       estado: 'nuevo',
-      actualizado: new Date().toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' }),
+      actualizado: horaCorta(),
     }
     const actualizados = [nuevo, ...casos]
     setCasos(actualizados)
-    guardarCasos(actualizados)
+    guardarColeccion(claves.casos, actualizados)
     setFormulario({ ...formulario, municipio: '', departamento: '', personas: 1, contacto: '', coordenadas: '', notas: '' })
     setVista('operaciones')
   }
@@ -294,17 +369,97 @@ function App() {
   function cambiarEstado(id: string, estado: Estado) {
     const actualizados = casos.map((caso) =>
       caso.id === id
-        ? { ...caso, estado, actualizado: new Date().toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' }) }
+        ? { ...caso, estado, actualizado: horaCorta() }
         : caso,
     )
     setCasos(actualizados)
-    guardarCasos(actualizados)
+    guardarColeccion(claves.casos, actualizados)
+  }
+
+  function guardarCasos(actualizados: Caso[]) {
+    setCasos(actualizados)
+    guardarColeccion(claves.casos, actualizados)
+  }
+
+  function agregarVoluntario(evento: FormEvent) {
+    evento.preventDefault()
+    const actualizados = [{ id: siguienteId('EQ', voluntarios), ...nuevoVoluntario }, ...voluntarios]
+    setVoluntarios(actualizados)
+    guardarColeccion(claves.voluntarios, actualizados)
+    setNuevoVoluntario({ ...nuevoVoluntario, nombre: '', base: '', disponibilidad: '', contacto: '' })
+  }
+
+  function actualizarVoluntario(id: string, cambios: Partial<Voluntario>) {
+    const actualizados = voluntarios.map((item) => item.id === id ? { ...item, ...cambios } : item)
+    setVoluntarios(actualizados)
+    guardarColeccion(claves.voluntarios, actualizados)
+  }
+
+  function agregarRecurso(evento: FormEvent) {
+    evento.preventDefault()
+    const actualizados = [{ id: siguienteId('INV', recursos), ...nuevoRecurso }, ...recursos]
+    setRecursos(actualizados)
+    guardarColeccion(claves.recursos, actualizados)
+    setNuevoRecurso({ ...nuevoRecurso, nombre: '', ubicacion: '', cantidad: '', responsable: '' })
+  }
+
+  function actualizarRecurso(id: string, cambios: Partial<Recurso>) {
+    const actualizados = recursos.map((item) => item.id === id ? { ...item, ...cambios } : item)
+    setRecursos(actualizados)
+    guardarColeccion(claves.recursos, actualizados)
+  }
+
+  function agregarAlbergue(evento: FormEvent) {
+    evento.preventDefault()
+    const ocupacion = Math.min(Number(nuevoAlbergue.ocupacion), Number(nuevoAlbergue.capacidad))
+    const actualizados = [{ id: siguienteId('ALB', albergues), ...nuevoAlbergue, capacidad: Number(nuevoAlbergue.capacidad), ocupacion }, ...albergues]
+    setAlbergues(actualizados)
+    guardarColeccion(claves.albergues, actualizados)
+    setNuevoAlbergue({ ...nuevoAlbergue, nombre: '', municipio: '', capacidad: 50, ocupacion: 0, responsable: '' })
+  }
+
+  function actualizarAlbergue(id: string, cambios: Partial<Albergue>) {
+    const actualizados = albergues.map((item) => item.id === id ? { ...item, ...cambios } : item)
+    setAlbergues(actualizados)
+    guardarColeccion(claves.albergues, actualizados)
+  }
+
+  function agregarPersona(evento: FormEvent) {
+    evento.preventDefault()
+    const actualizados = [{ id: siguienteId('PER', personas), ...nuevaPersona, actualizado: horaCorta() }, ...personas]
+    setPersonas(actualizados)
+    guardarColeccion(claves.personas, actualizados)
+    setNuevaPersona({ ...nuevaPersona, etiqueta: '', municipio: '', ultimaNota: '', contacto: '' })
+  }
+
+  function actualizarPersona(id: string, cambios: Partial<Persona>) {
+    const actualizados = personas.map((item) => item.id === id ? { ...item, ...cambios, actualizado: horaCorta() } : item)
+    setPersonas(actualizados)
+    guardarColeccion(claves.personas, actualizados)
+  }
+
+  function agregarAsignacion(evento: FormEvent) {
+    evento.preventDefault()
+    const equipo = nuevaAsignacion.equipo || voluntarios[0]?.nombre || 'Equipo pendiente'
+    const casoId = nuevaAsignacion.casoId || abiertos[0]?.id || ''
+    if (!casoId) return
+    const actualizados = [{ id: siguienteId('ASG', asignaciones), ...nuevaAsignacion, casoId, equipo }, ...asignaciones]
+    setAsignaciones(actualizados)
+    guardarColeccion(claves.asignaciones, actualizados)
+    guardarCasos(casos.map((caso) => caso.id === casoId ? { ...caso, estado: 'asignado', responsable: equipo, actualizado: horaCorta() } : caso))
+    setNuevaAsignacion({ ...nuevaAsignacion, casoId: '', equipo: '', eta: '30 min', responsable: '' })
+  }
+
+  function actualizarAsignacion(id: string, cambios: Partial<Asignacion>) {
+    const actualizados = asignaciones.map((item) => item.id === id ? { ...item, ...cambios } : item)
+    setAsignaciones(actualizados)
+    guardarColeccion(claves.asignaciones, actualizados)
   }
 
   function exportar(tipo: 'json' | 'csv') {
     const contenido =
       tipo === 'json'
-        ? JSON.stringify({ casos, voluntarios, recursos, albergues, personas, exportado: new Date().toISOString() }, null, 2)
+        ? JSON.stringify({ casos, voluntarios, recursos, albergues, personas, asignaciones, solicitudes, exportado: new Date().toISOString() }, null, 2)
         : [
             'id,municipio,departamento,necesidad,prioridad,personas,contacto,coordenadas,estado,responsable,actualizado,notas',
             ...casos.map((caso) =>
@@ -337,7 +492,19 @@ function App() {
 
   function restaurar() {
     setCasos(casosBase)
-    guardarCasos(casosBase)
+    setVoluntarios(voluntariosBase)
+    setRecursos(recursosBase)
+    setAlbergues(alberguesBase)
+    setPersonas(personasBase)
+    setAsignaciones(asignacionesBase)
+    setSolicitudes(solicitudesBase)
+    guardarColeccion(claves.casos, casosBase)
+    guardarColeccion(claves.voluntarios, voluntariosBase)
+    guardarColeccion(claves.recursos, recursosBase)
+    guardarColeccion(claves.albergues, alberguesBase)
+    guardarColeccion(claves.personas, personasBase)
+    guardarColeccion(claves.asignaciones, asignacionesBase)
+    guardarColeccion(claves.solicitudes, solicitudesBase)
   }
 
   return (
@@ -453,17 +620,26 @@ function App() {
               </div>
             </section>
             <section className="support-grid">
-              <Assignments />
+              <Assignments
+                asignaciones={asignaciones}
+                solicitudes={solicitudes}
+                casos={abiertos}
+                voluntarios={voluntarios}
+                formulario={nuevaAsignacion}
+                setFormulario={setNuevaAsignacion}
+                agregarAsignacion={agregarAsignacion}
+                actualizarAsignacion={actualizarAsignacion}
+              />
               <Sitrep casos={casos} />
             </section>
           </>
         )}
 
         {vista === 'ingreso' && <Ingreso formulario={formulario} setFormulario={setFormulario} agregarCaso={agregarCaso} />}
-        {vista === 'recursos' && <Recursos brechas={brechas} recursos={recursos} />}
-        {vista === 'voluntarios' && <Voluntarios voluntarios={voluntarios} casos={abiertos} />}
-        {vista === 'albergues' && <Albergues albergues={albergues} />}
-        {vista === 'personas' && <Personas personas={personas} />}
+        {vista === 'recursos' && <Recursos brechas={brechas} recursos={recursos} formulario={nuevoRecurso} setFormulario={setNuevoRecurso} agregarRecurso={agregarRecurso} actualizarRecurso={actualizarRecurso} />}
+        {vista === 'voluntarios' && <Voluntarios voluntarios={voluntarios} casos={abiertos} formulario={nuevoVoluntario} setFormulario={setNuevoVoluntario} agregarVoluntario={agregarVoluntario} actualizarVoluntario={actualizarVoluntario} />}
+        {vista === 'albergues' && <Albergues albergues={albergues} formulario={nuevoAlbergue} setFormulario={setNuevoAlbergue} agregarAlbergue={agregarAlbergue} actualizarAlbergue={actualizarAlbergue} />}
+        {vista === 'personas' && <Personas personas={personas} formulario={nuevaPersona} setFormulario={setNuevaPersona} agregarPersona={agregarPersona} actualizarPersona={actualizarPersona} />}
       </section>
     </main>
   )
@@ -548,7 +724,34 @@ function Ingreso({ formulario, setFormulario, agregarCaso }: {
   )
 }
 
-function Recursos({ brechas, recursos }: { brechas: { necesidad: Necesidad; demanda: number; oferta: number; brecha: number }[]; recursos: Recurso[] }) {
+function SelectorNecesidades({ value, onChange }: { value: Necesidad[]; onChange: (value: Necesidad[]) => void }) {
+  return (
+    <div className="check-grid">
+      {necesidades.map((necesidad) => (
+        <label key={necesidad} className="check-row">
+          <input
+            type="checkbox"
+            checked={value.includes(necesidad)}
+            onChange={(e) => {
+              const siguiente = e.target.checked ? [...value, necesidad] : value.filter((item) => item !== necesidad)
+              onChange(siguiente.length ? siguiente : [necesidad])
+            }}
+          />
+          <span>{necesidadLabel[necesidad]}</span>
+        </label>
+      ))}
+    </div>
+  )
+}
+
+function Recursos({ brechas, recursos, formulario, setFormulario, agregarRecurso, actualizarRecurso }: {
+  brechas: { necesidad: Necesidad; demanda: number; oferta: number; brecha: number }[]
+  recursos: Recurso[]
+  formulario: Omit<Recurso, 'id'>
+  setFormulario: (valor: Omit<Recurso, 'id'>) => void
+  agregarRecurso: (evento: FormEvent) => void
+  actualizarRecurso: (id: string, cambios: Partial<Recurso>) => void
+}) {
   return (
     <section className="two-column">
       <div className="panel">
@@ -556,49 +759,173 @@ function Recursos({ brechas, recursos }: { brechas: { necesidad: Necesidad; dema
         <div className="need-list">
           {brechas.map((item) => <div className="need-row" key={item.necesidad}><span>{necesidadLabel[item.necesidad]}</span><meter min="0" max="6" value={Math.min(item.demanda, 6)} /><strong>{item.brecha ? `${item.brecha} brecha` : 'cubierto'}</strong></div>)}
         </div>
+        <form className="inline-form" onSubmit={agregarRecurso}>
+          <h2><Archive size={19} /> Agregar insumo</h2>
+          <div className="form-grid">
+            <label>Nombre<input value={formulario.nombre} onChange={(e) => setFormulario({ ...formulario, nombre: e.target.value })} required /></label>
+            <label>Tipo<select value={formulario.tipo} onChange={(e) => setFormulario({ ...formulario, tipo: e.target.value as Necesidad })}>{necesidades.map((item) => <option key={item} value={item}>{necesidadLabel[item]}</option>)}</select></label>
+            <label>Ubicación<input value={formulario.ubicacion} onChange={(e) => setFormulario({ ...formulario, ubicacion: e.target.value })} required /></label>
+            <label>Cantidad<input value={formulario.cantidad} onChange={(e) => setFormulario({ ...formulario, cantidad: e.target.value })} required /></label>
+            <label>Estado<select value={formulario.estado} onChange={(e) => setFormulario({ ...formulario, estado: e.target.value as Recurso['estado'] })}><option value="disponible">Disponible</option><option value="reservado">Reservado</option><option value="en ruta">En ruta</option><option value="agotado">Agotado</option></select></label>
+            <label>Responsable<input value={formulario.responsable} onChange={(e) => setFormulario({ ...formulario, responsable: e.target.value })} /></label>
+          </div>
+          <button className="primary wide" type="submit">Guardar insumo</button>
+        </form>
       </div>
       <div className="panel">
         <h2><Archive size={19} /> Inventario listo</h2>
         <div className="stack">
-          {recursos.map((recurso) => <article key={recurso.nombre}><strong>{recurso.nombre}</strong><p>{recurso.cantidad} · {recurso.ubicacion}</p><span className="pill">{necesidadLabel[recurso.tipo]} · {recurso.estado}</span></article>)}
+          {recursos.map((recurso) => (
+            <article key={recurso.id}>
+              <strong>{recurso.nombre}</strong>
+              <p>{recurso.cantidad} · {recurso.ubicacion} · {recurso.responsable || 'sin responsable'}</p>
+              <div className="edit-row">
+                <span className="pill">{necesidadLabel[recurso.tipo]}</span>
+                <select value={recurso.estado} onChange={(e) => actualizarRecurso(recurso.id, { estado: e.target.value as Recurso['estado'] })}>
+                  <option value="disponible">Disponible</option><option value="reservado">Reservado</option><option value="en ruta">En ruta</option><option value="agotado">Agotado</option>
+                </select>
+              </div>
+            </article>
+          ))}
         </div>
       </div>
     </section>
   )
 }
 
-function Voluntarios({ voluntarios, casos }: { voluntarios: Voluntario[]; casos: Caso[] }) {
+function Voluntarios({ voluntarios, casos, formulario, setFormulario, agregarVoluntario, actualizarVoluntario }: {
+  voluntarios: Voluntario[]
+  casos: Caso[]
+  formulario: Omit<Voluntario, 'id'>
+  setFormulario: (valor: Omit<Voluntario, 'id'>) => void
+  agregarVoluntario: (evento: FormEvent) => void
+  actualizarVoluntario: (id: string, cambios: Partial<Voluntario>) => void
+}) {
   return (
-    <section className="panel">
-      <h2><Users size={19} /> Equipos y asignaciones sugeridas</h2>
-      <div className="roster-grid">
-        {voluntarios.map((voluntario) => {
-          const sugeridos = casos.filter((caso) => voluntario.habilidades.includes(caso.necesidad)).slice(0, 2)
-          return <article key={voluntario.nombre}><strong>{voluntario.nombre}</strong><p>{voluntario.base} · {voluntario.disponibilidad} · turno {voluntario.turno}</p><div className="tags">{voluntario.habilidades.map((skill) => <span key={skill}>{necesidadLabel[skill]}</span>)}</div><small>Sugerido: {sugeridos.map((caso) => caso.id).join(', ') || 'sin caso abierto'}</small></article>
-        })}
+    <section className="two-column">
+      <div className="panel">
+        <h2><Users size={19} /> Nuevo equipo / usuario</h2>
+        <form onSubmit={agregarVoluntario}>
+          <div className="form-grid">
+            <label>Nombre<input value={formulario.nombre} onChange={(e) => setFormulario({ ...formulario, nombre: e.target.value })} required /></label>
+            <label>Base<input value={formulario.base} onChange={(e) => setFormulario({ ...formulario, base: e.target.value })} required /></label>
+            <label>Rol<select value={formulario.rol} onChange={(e) => setFormulario({ ...formulario, rol: e.target.value as Voluntario['rol'] })}><option value="coordinador">Coordinador</option><option value="verificador">Verificador</option><option value="voluntario">Voluntario</option></select></label>
+            <label>Estado<select value={formulario.estado} onChange={(e) => setFormulario({ ...formulario, estado: e.target.value as Voluntario['estado'] })}><option value="disponible">Disponible</option><option value="asignado">Asignado</option><option value="descanso">Descanso</option></select></label>
+            <label>Disponibilidad<input value={formulario.disponibilidad} onChange={(e) => setFormulario({ ...formulario, disponibilidad: e.target.value })} placeholder="Ej. 8 personas, 2 camiones" required /></label>
+            <label>Turno<input value={formulario.turno} onChange={(e) => setFormulario({ ...formulario, turno: e.target.value })} /></label>
+          </div>
+          <label>Contacto operativo<input value={formulario.contacto} onChange={(e) => setFormulario({ ...formulario, contacto: e.target.value })} /></label>
+          <label>Habilidades<SelectorNecesidades value={formulario.habilidades} onChange={(habilidades) => setFormulario({ ...formulario, habilidades })} /></label>
+          <button className="primary wide" type="submit">Guardar equipo</button>
+        </form>
+      </div>
+      <div className="panel">
+        <h2><Users size={19} /> Equipos y asignaciones sugeridas</h2>
+        <div className="roster-grid single">
+          {voluntarios.map((voluntario) => {
+            const sugeridos = casos.filter((caso) => voluntario.habilidades.includes(caso.necesidad)).slice(0, 2)
+            return (
+              <article key={voluntario.id}>
+                <strong>{voluntario.nombre}</strong>
+                <p>{voluntario.base} · {voluntario.rol} · {voluntario.disponibilidad} · turno {voluntario.turno}</p>
+                <div className="tags">{voluntario.habilidades.map((skill) => <span key={skill}>{necesidadLabel[skill]}</span>)}</div>
+                <div className="edit-row">
+                  <small>Sugerido: {sugeridos.map((caso) => caso.id).join(', ') || 'sin caso abierto'}</small>
+                  <select value={voluntario.estado} onChange={(e) => actualizarVoluntario(voluntario.id, { estado: e.target.value as Voluntario['estado'] })}>
+                    <option value="disponible">Disponible</option><option value="asignado">Asignado</option><option value="descanso">Descanso</option>
+                  </select>
+                </div>
+              </article>
+            )
+          })}
+        </div>
       </div>
     </section>
   )
 }
 
-function Albergues({ albergues }: { albergues: Albergue[] }) {
+function Albergues({ albergues, formulario, setFormulario, agregarAlbergue, actualizarAlbergue }: {
+  albergues: Albergue[]
+  formulario: Omit<Albergue, 'id'>
+  setFormulario: (valor: Omit<Albergue, 'id'>) => void
+  agregarAlbergue: (evento: FormEvent) => void
+  actualizarAlbergue: (id: string, cambios: Partial<Albergue>) => void
+}) {
   return (
-    <section className="panel">
-      <h2><Warehouse size={19} /> Albergues y ocupación</h2>
-      <div className="shelter-grid">
-        {albergues.map((albergue) => <article key={albergue.nombre}><strong>{albergue.nombre}</strong><p>{albergue.municipio}</p><meter min="0" max={albergue.capacidad} value={albergue.ocupacion} /><span>{albergue.ocupacion}/{albergue.capacidad} personas</span><div className="tags">{albergue.necesidades.map((n) => <span key={n}>{necesidadLabel[n]}</span>)}</div></article>)}
+    <section className="two-column">
+      <div className="panel">
+        <h2><Warehouse size={19} /> Nuevo albergue</h2>
+        <form onSubmit={agregarAlbergue}>
+          <div className="form-grid">
+            <label>Nombre<input value={formulario.nombre} onChange={(e) => setFormulario({ ...formulario, nombre: e.target.value })} required /></label>
+            <label>Municipio<input value={formulario.municipio} onChange={(e) => setFormulario({ ...formulario, municipio: e.target.value })} required /></label>
+            <label>Capacidad<input type="number" min="1" value={formulario.capacidad} onChange={(e) => setFormulario({ ...formulario, capacidad: Number(e.target.value) })} /></label>
+            <label>Ocupación<input type="number" min="0" value={formulario.ocupacion} onChange={(e) => setFormulario({ ...formulario, ocupacion: Number(e.target.value) })} /></label>
+            <label>Estado<select value={formulario.estado} onChange={(e) => setFormulario({ ...formulario, estado: e.target.value as Albergue['estado'] })}><option value="abierto">Abierto</option><option value="casi lleno">Casi lleno</option><option value="lleno">Lleno</option></select></label>
+            <label>Responsable<input value={formulario.responsable} onChange={(e) => setFormulario({ ...formulario, responsable: e.target.value })} /></label>
+          </div>
+          <label>Necesidades<SelectorNecesidades value={formulario.necesidades} onChange={(necesidades) => setFormulario({ ...formulario, necesidades })} /></label>
+          <button className="primary wide" type="submit">Guardar albergue</button>
+        </form>
+      </div>
+      <div className="panel">
+        <h2><Warehouse size={19} /> Albergues y ocupación</h2>
+        <div className="shelter-grid single">
+          {albergues.map((albergue) => (
+            <article key={albergue.id}>
+              <strong>{albergue.nombre}</strong>
+              <p>{albergue.municipio} · {albergue.responsable || 'sin responsable'}</p>
+              <meter min="0" max={albergue.capacidad} value={albergue.ocupacion} />
+              <div className="edit-row">
+                <span>{albergue.ocupacion}/{albergue.capacidad} personas</span>
+                <input type="number" min="0" max={albergue.capacidad} value={albergue.ocupacion} onChange={(e) => actualizarAlbergue(albergue.id, { ocupacion: Number(e.target.value) })} />
+                <select value={albergue.estado} onChange={(e) => actualizarAlbergue(albergue.id, { estado: e.target.value as Albergue['estado'] })}>
+                  <option value="abierto">Abierto</option><option value="casi lleno">Casi lleno</option><option value="lleno">Lleno</option>
+                </select>
+              </div>
+              <div className="tags">{albergue.necesidades.map((n) => <span key={n}>{necesidadLabel[n]}</span>)}</div>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   )
 }
 
-function Personas({ personas }: { personas: Persona[] }) {
+function Personas({ personas, formulario, setFormulario, agregarPersona, actualizarPersona }: {
+  personas: Persona[]
+  formulario: Omit<Persona, 'id' | 'actualizado'>
+  setFormulario: (valor: Omit<Persona, 'id' | 'actualizado'>) => void
+  agregarPersona: (evento: FormEvent) => void
+  actualizarPersona: (id: string, cambios: Partial<Persona>) => void
+}) {
   return (
     <section className="panel focused">
       <h2><ShieldCheck size={19} /> Verificación mínima de personas</h2>
       <p className="helper">Registra solo grupos o referencias mínimas. Evita nombres completos, cédulas o datos médicos.</p>
-      <div className="stack">
-        {personas.map((persona) => <article className={`person ${persona.estado.replace(' ', '-')}`} key={persona.etiqueta}><strong>{persona.etiqueta}</strong><p>{persona.municipio} · {persona.estado}</p><span>{persona.ultimaNota}</span></article>)}
+      <form onSubmit={agregarPersona}>
+        <div className="form-grid">
+          <label>Etiqueta segura<input value={formulario.etiqueta} onChange={(e) => setFormulario({ ...formulario, etiqueta: e.target.value })} placeholder="Ej. Grupo familiar zona norte" required /></label>
+          <label>Municipio<input value={formulario.municipio} onChange={(e) => setFormulario({ ...formulario, municipio: e.target.value })} required /></label>
+          <label>Estado<select value={formulario.estado} onChange={(e) => setFormulario({ ...formulario, estado: e.target.value as Persona['estado'] })}><option value="sin confirmar">Sin confirmar</option><option value="a salvo">A salvo</option><option value="requiere ayuda">Requiere ayuda</option></select></label>
+          <label>Contacto operativo<input value={formulario.contacto} onChange={(e) => setFormulario({ ...formulario, contacto: e.target.value })} /></label>
+        </div>
+        <label>Última nota<textarea rows={3} value={formulario.ultimaNota} onChange={(e) => setFormulario({ ...formulario, ultimaNota: e.target.value })} required /></label>
+        <button className="primary wide" type="submit">Guardar check-in</button>
+      </form>
+      <div className="stack section-gap">
+        {personas.map((persona) => (
+          <article className={`person ${persona.estado.replace(' ', '-')}`} key={persona.id}>
+            <strong>{persona.etiqueta}</strong>
+            <p>{persona.municipio} · {persona.contacto || 'sin contacto'} · {persona.actualizado}</p>
+            <span>{persona.ultimaNota}</span>
+            <div className="edit-row">
+              <select value={persona.estado} onChange={(e) => actualizarPersona(persona.id, { estado: e.target.value as Persona['estado'] })}>
+                <option value="sin confirmar">Sin confirmar</option><option value="a salvo">A salvo</option><option value="requiere ayuda">Requiere ayuda</option>
+              </select>
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   )
@@ -608,12 +935,41 @@ function MiniRow({ title, body, status }: { title: string; body: string; status:
   return <article className="mini-row"><strong>{title}</strong><p>{body}</p><span>{status}</span></article>
 }
 
-function Assignments() {
+function Assignments({ asignaciones, solicitudes, casos, voluntarios, formulario, setFormulario, agregarAsignacion, actualizarAsignacion }: {
+  asignaciones: Asignacion[]
+  solicitudes: Solicitud[]
+  casos: Caso[]
+  voluntarios: Voluntario[]
+  formulario: Omit<Asignacion, 'id'>
+  setFormulario: (valor: Omit<Asignacion, 'id'>) => void
+  agregarAsignacion: (evento: FormEvent) => void
+  actualizarAsignacion: (id: string, cambios: Partial<Asignacion>) => void
+}) {
   return (
     <section className="panel">
       <h2><Truck size={19} /> Tablero de asignaciones</h2>
+      <form className="inline-form" onSubmit={agregarAsignacion}>
+        <div className="form-grid compact">
+          <label>Caso<select value={formulario.casoId} onChange={(e) => setFormulario({ ...formulario, casoId: e.target.value })} required><option value="">Seleccionar</option>{casos.map((caso) => <option key={caso.id} value={caso.id}>{caso.id} · {caso.municipio}</option>)}</select></label>
+          <label>Equipo<select value={formulario.equipo} onChange={(e) => setFormulario({ ...formulario, equipo: e.target.value })} required><option value="">Seleccionar</option>{voluntarios.map((equipo) => <option key={equipo.id} value={equipo.nombre}>{equipo.nombre}</option>)}</select></label>
+          <label>ETA<input value={formulario.eta} onChange={(e) => setFormulario({ ...formulario, eta: e.target.value })} /></label>
+          <label>Responsable<input value={formulario.responsable} onChange={(e) => setFormulario({ ...formulario, responsable: e.target.value })} /></label>
+        </div>
+        <button className="primary wide" type="submit">Crear asignación</button>
+      </form>
       <div className="stack">
-        {asignaciones.map((item) => <article key={item.id}><strong>{item.casoId} · {item.equipo}</strong><p>{item.responsable} · ETA {item.eta}</p><span className="pill">{item.estado}</span></article>)}
+        {asignaciones.map((item) => (
+          <article key={item.id}>
+            <strong>{item.casoId} · {item.equipo}</strong>
+            <p>{item.responsable || 'sin responsable'} · ETA {item.eta}</p>
+            <div className="edit-row">
+              <select value={item.estado} onChange={(e) => actualizarAsignacion(item.id, { estado: e.target.value as Asignacion['estado'] })}>
+                <option value="aceptado">Aceptado</option><option value="en ruta">En ruta</option><option value="en sitio">En sitio</option><option value="bloqueado">Bloqueado</option>
+              </select>
+              <input value={item.eta} onChange={(e) => actualizarAsignacion(item.id, { eta: e.target.value })} aria-label="ETA" />
+            </div>
+          </article>
+        ))}
       </div>
       <h2><PackageCheck size={19} /> Solicitudes concretas</h2>
       <div className="stack tight">

@@ -19,8 +19,12 @@ npm run build
 - Mesa de verificación con criterios mínimos antes de asignar o exportar.
 - Tablero de asignaciones con ETA, responsable y estado.
 - Solicitudes concretas de suministros por caso.
-- Inventario, brechas por necesidad, equipos disponibles, albergues y verificación mínima de personas.
-- SITREP copiable y exportación CSV/JSON.
+- Inventario editable con estado, ubicación, cantidad y responsable operativo.
+- Equipos/usuarios editables con rol de coordinador, verificador o voluntario, estado, turno y habilidades.
+- Albergues editables con capacidad, ocupación, estado, responsable y necesidades.
+- Check-ins de personas/grupos con etiqueta segura, estado y nota mínima.
+- Asignaciones de casos a equipos con ETA, responsable y estado; al crear una asignación el caso queda marcado como asignado.
+- SITREP copiable y exportación CSV/JSON con casos, equipos, recursos, albergues, personas, asignaciones y solicitudes.
 
 ## Límites de seguridad
 

@@ -2,6 +2,8 @@
 
 Aplicación local-first para coordinar reportes, verificación, asignaciones, recursos, albergues y reportes SITREP después del sismo en Colombia del 10 de agosto de 2026.
 
+Tema visual construido con la línea sobria de Lulo Studios: fondo oscuro, tarjetas elevadas, acentos morados y uso mínimo de amarillo colombiano para señales de atención.
+
 ## Ejecutar
 
 ```bash

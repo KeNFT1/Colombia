@@ -629,6 +629,13 @@ function App() {
           <Bell size={16} />
           <span>Datos locales. Exporta solo información verificada.</span>
         </div>
+        <div className="lulo-credit" aria-label="Construido por Lulo Studios">
+          <span className="lulo-orb">L</span>
+          <div>
+            <strong>Lulo Studios</strong>
+            <small>Herramientas útiles para respuesta pública.</small>
+          </div>
+        </div>
       </aside>
 
       <section className="workspace">
@@ -638,10 +645,13 @@ function App() {
             <h1>Mesa de Respuesta - Sismo Colombia</h1>
             <p>Registra reportes, prioriza casos y coordina equipos locales.</p>
           </div>
-          <div className="actions">
-            <button onClick={() => exportar('csv')} title="Descargar casos en CSV"><FileDown size={18} /> CSV</button>
-            <button onClick={() => exportar('json')} title="Descargar paquete JSON"><Download size={18} /> JSON</button>
-            <button className="quiet" onClick={restaurar} title="Restaurar datos de ejemplo"><Languages size={18} /> Reiniciar</button>
+          <div className="topbar-tools">
+            <span className="studio-chip">Lulo Studios · utilidad pública</span>
+            <div className="actions">
+              <button onClick={() => exportar('csv')} title="Descargar casos en CSV"><FileDown size={18} /> CSV</button>
+              <button onClick={() => exportar('json')} title="Descargar paquete JSON"><Download size={18} /> JSON</button>
+              <button className="quiet" onClick={restaurar} title="Restaurar datos de ejemplo"><Languages size={18} /> Reiniciar</button>
+            </div>
           </div>
         </header>
 

@@ -29,7 +29,7 @@ type Estado = 'nuevo' | 'verificado' | 'asignado' | 'resuelto'
 type Prioridad = 'critica' | 'alta' | 'media' | 'baja'
 type Necesidad = 'medica' | 'albergue' | 'agua' | 'alimentos' | 'escombros' | 'transporte' | 'comunicaciones' | 'familia'
 type Vista = 'inicio' | 'operaciones' | 'ingreso' | 'recursos' | 'voluntarios' | 'albergues' | 'personas'
-type Filtro = 'todas' | 'criticas' | 'sin-verificar' | 'sin-asignar' | Necesidad
+type Filtro = 'todas' | 'criticas' | 'sin-verificar' | 'sin-asignar' | 'bloqueadas' | 'riesgo-albergue' | 'brechas' | Necesidad
 
 type Caso = {
   id: string
@@ -93,9 +93,10 @@ type Asignacion = {
   id: string
   casoId: string
   equipo: string
-  estado: 'aceptado' | 'en ruta' | 'en sitio' | 'bloqueado'
+  estado: 'aceptado' | 'en ruta' | 'en sitio' | 'bloqueado' | 'completado'
   eta: string
   responsable: string
+  bloqueo?: string
 }
 
 type Solicitud = {
@@ -108,9 +109,13 @@ type Solicitud = {
   estado: 'abierta' | 'comprometida' | 'cubierta'
 }
 
+type AsignacionForm = Omit<Asignacion, 'id'> & { bloqueo: string }
+type SolicitudForm = Omit<Solicitud, 'id'>
+
 const necesidades: Necesidad[] = ['medica', 'albergue', 'agua', 'alimentos', 'escombros', 'transporte', 'comunicaciones', 'familia']
 const estados: Estado[] = ['nuevo', 'verificado', 'asignado', 'resuelto']
 const prioridadPeso: Record<Prioridad, number> = { critica: 4, alta: 3, media: 2, baja: 1 }
+const prioridadAccion: Record<Estado, number> = { nuevo: 4, verificado: 3, asignado: 2, resuelto: 0 }
 const necesidadLabel: Record<Necesidad, string> = {
   medica: 'Salud',
   albergue: 'Albergue',
@@ -276,6 +281,7 @@ function App() {
   const [personas, setPersonas] = useState<Persona[]>(() => leerColeccion(claves.personas, personasBase))
   const [asignaciones, setAsignaciones] = useState<Asignacion[]>(() => leerColeccion(claves.asignaciones, asignacionesBase))
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>(() => leerColeccion(claves.solicitudes, solicitudesBase))
+  const [casoSeleccionadoId, setCasoSeleccionadoId] = useState('')
   const [formulario, setFormulario] = useState({
     municipio: '',
     departamento: '',
@@ -320,15 +326,29 @@ function App() {
     ultimaNota: '',
     contacto: '',
   })
+  const [privacidadPersonaOk, setPrivacidadPersonaOk] = useState(false)
   const [nuevaAsignacion, setNuevaAsignacion] = useState({
     casoId: '',
     equipo: '',
     estado: 'aceptado' as Asignacion['estado'],
     eta: '30 min',
     responsable: '',
+    bloqueo: '',
+  })
+  const [nuevaSolicitud, setNuevaSolicitud] = useState({
+    casoId: '',
+    item: '',
+    cantidad: '',
+    entregado: '0',
+    punto: '',
+    estado: 'abierta' as Solicitud['estado'],
   })
 
   const abiertos = casos.filter((caso) => caso.estado !== 'resuelto')
+  const asignacionesBloqueadas = asignaciones.filter((item) => item.estado === 'bloqueado')
+  const alberguesEnRiesgo = albergues.filter((albergue) => albergue.estado !== 'lleno' && albergue.ocupacion / Math.max(albergue.capacidad, 1) >= 0.8)
+  const casoSeleccionado = casos.find((caso) => caso.id === casoSeleccionadoId) ?? null
+  const solicitudesAbiertas = solicitudes.filter((item) => item.estado !== 'cubierta')
   const filtrados = useMemo(() => {
     return casos
       .filter((caso) => {
@@ -336,19 +356,44 @@ function App() {
         if (filtro === 'criticas') return caso.prioridad === 'critica'
         if (filtro === 'sin-verificar') return caso.estado === 'nuevo'
         if (filtro === 'sin-asignar') return caso.estado === 'nuevo' || caso.estado === 'verificado'
+        if (filtro === 'bloqueadas') return asignacionesBloqueadas.some((item) => item.casoId === caso.id)
+        if (filtro === 'riesgo-albergue') return caso.necesidad === 'albergue' && alberguesEnRiesgo.length > 0
+        if (filtro === 'brechas') return solicitudesAbiertas.some((item) => item.casoId === caso.id)
         return caso.necesidad === filtro
       })
       .filter((caso) => `${caso.municipio} ${caso.departamento} ${caso.notas}`.toLowerCase().includes(busqueda.toLowerCase()))
-      .sort((a, b) => prioridadPeso[b.prioridad] - prioridadPeso[a.prioridad])
-  }, [busqueda, casos, filtro])
+      .sort((a, b) => (prioridadPeso[b.prioridad] + prioridadAccion[b.estado]) - (prioridadPeso[a.prioridad] + prioridadAccion[a.estado]))
+  }, [alberguesEnRiesgo.length, asignacionesBloqueadas, busqueda, casos, filtro, solicitudesAbiertas])
 
   const brechas = necesidades.map((necesidad) => {
     const demanda = abiertos.filter((caso) => caso.necesidad === necesidad).length
     const oferta = voluntarios.filter((voluntario) => voluntario.habilidades.includes(necesidad)).length + recursos.filter((recurso) => recurso.tipo === necesidad).length
     return { necesidad, demanda, oferta, brecha: Math.max(demanda - oferta, 0) }
   })
+  const brechasActivas = brechas.filter((item) => item.brecha > 0)
 
   const casoMasUrgente = filtrados.find((caso) => caso.estado !== 'resuelto')
+  const casoActivo = casoSeleccionado ?? casoMasUrgente ?? abiertos[0] ?? null
+  const equiposSugeridos = casoActivo
+    ? voluntarios
+        .filter((equipo) => equipo.habilidades.includes(casoActivo.necesidad))
+        .sort((a, b) => (a.estado === 'disponible' ? -1 : 1) - (b.estado === 'disponible' ? -1 : 1))
+        .slice(0, 3)
+    : []
+  const recursosSugeridos = casoActivo ? recursos.filter((recurso) => recurso.tipo === casoActivo.necesidad && recurso.estado !== 'agotado').slice(0, 3) : []
+  const alberguesSugeridos = casoActivo
+    ? albergues
+        .filter((albergue) => albergue.ocupacion < albergue.capacidad && (casoActivo.necesidad === 'albergue' || albergue.municipio === casoActivo.municipio))
+        .slice(0, 3)
+    : []
+  const riesgos = {
+    criticos: abiertos.filter((caso) => caso.prioridad === 'critica').length,
+    sinVerificar: abiertos.filter((caso) => caso.estado === 'nuevo').length,
+    verificadosSinAsignar: abiertos.filter((caso) => caso.estado === 'verificado').length,
+    bloqueadas: asignacionesBloqueadas.length,
+    albergue: alberguesEnRiesgo.length,
+    brechas: brechasActivas.length + solicitudesAbiertas.length,
+  }
 
   function agregarCaso(evento: FormEvent) {
     evento.preventDefault()
@@ -362,6 +407,7 @@ function App() {
     const actualizados = [nuevo, ...casos]
     setCasos(actualizados)
     guardarColeccion(claves.casos, actualizados)
+    setCasoSeleccionadoId(nuevo.id)
     setFormulario({ ...formulario, municipio: '', departamento: '', personas: 1, contacto: '', coordenadas: '', notas: '' })
     setVista('operaciones')
   }
@@ -374,6 +420,29 @@ function App() {
     )
     setCasos(actualizados)
     guardarColeccion(claves.casos, actualizados)
+  }
+
+  function seleccionarCaso(caso: Caso) {
+    setCasoSeleccionadoId(caso.id)
+    const equipo = voluntarios.find((item) => item.habilidades.includes(caso.necesidad) && item.estado === 'disponible') ?? voluntarios.find((item) => item.habilidades.includes(caso.necesidad))
+    const recurso = recursos.find((item) => item.tipo === caso.necesidad && item.estado !== 'agotado')
+    const albergue = albergues.find((item) => item.ocupacion < item.capacidad && (caso.necesidad === 'albergue' || item.municipio === caso.municipio))
+    setNuevaAsignacion({
+      casoId: caso.id,
+      equipo: equipo?.nombre ?? '',
+      estado: 'aceptado',
+      eta: caso.prioridad === 'critica' ? '20 min' : '45 min',
+      responsable: equipo?.contacto ?? caso.contacto,
+      bloqueo: '',
+    })
+    setNuevaSolicitud({
+      casoId: caso.id,
+      item: recurso?.nombre ?? (caso.necesidad === 'albergue' ? 'Cupos de albergue' : necesidadLabel[caso.necesidad]),
+      cantidad: caso.necesidad === 'albergue' ? String(caso.personas) : '',
+      entregado: '0',
+      punto: albergue?.nombre ?? caso.municipio,
+      estado: 'abierta',
+    })
   }
 
   function guardarCasos(actualizados: Caso[]) {
@@ -430,6 +499,7 @@ function App() {
     setPersonas(actualizados)
     guardarColeccion(claves.personas, actualizados)
     setNuevaPersona({ ...nuevaPersona, etiqueta: '', municipio: '', ultimaNota: '', contacto: '' })
+    setPrivacidadPersonaOk(false)
   }
 
   function actualizarPersona(id: string, cambios: Partial<Persona>) {
@@ -447,7 +517,7 @@ function App() {
     setAsignaciones(actualizados)
     guardarColeccion(claves.asignaciones, actualizados)
     guardarCasos(casos.map((caso) => caso.id === casoId ? { ...caso, estado: 'asignado', responsable: equipo, actualizado: horaCorta() } : caso))
-    setNuevaAsignacion({ ...nuevaAsignacion, casoId: '', equipo: '', eta: '30 min', responsable: '' })
+    setNuevaAsignacion({ ...nuevaAsignacion, casoId: '', equipo: '', eta: '30 min', responsable: '', bloqueo: '' })
   }
 
   function actualizarAsignacion(id: string, cambios: Partial<Asignacion>) {
@@ -456,13 +526,32 @@ function App() {
     guardarColeccion(claves.asignaciones, actualizados)
   }
 
+  function agregarSolicitud(evento: FormEvent) {
+    evento.preventDefault()
+    const casoId = nuevaSolicitud.casoId || casoActivo?.id || ''
+    if (!casoId) return
+    const actualizados = [{ id: siguienteId('REQ', solicitudes), ...nuevaSolicitud, casoId }, ...solicitudes]
+    setSolicitudes(actualizados)
+    guardarColeccion(claves.solicitudes, actualizados)
+    setNuevaSolicitud({ ...nuevaSolicitud, casoId: '', item: '', cantidad: '', entregado: '0', punto: '', estado: 'abierta' })
+  }
+
+  function actualizarSolicitud(id: string, cambios: Partial<Solicitud>) {
+    const actualizados = solicitudes.map((item) => item.id === id ? { ...item, ...cambios } : item)
+    setSolicitudes(actualizados)
+    guardarColeccion(claves.solicitudes, actualizados)
+  }
+
   function exportar(tipo: 'json' | 'csv') {
+    const csv = (filas: (string | number | undefined)[][]) => filas.map((fila) => fila.map((valor) => `"${String(valor ?? '').replaceAll('"', '""')}"`).join(',')).join('\n')
     const contenido =
       tipo === 'json'
         ? JSON.stringify({ casos, voluntarios, recursos, albergues, personas, asignaciones, solicitudes, exportado: new Date().toISOString() }, null, 2)
         : [
-            'id,municipio,departamento,necesidad,prioridad,personas,contacto,coordenadas,estado,responsable,actualizado,notas',
-            ...casos.map((caso) =>
+            '# casos',
+            csv([
+              ['id', 'municipio', 'departamento', 'necesidad', 'prioridad', 'personas', 'contacto', 'coordenadas', 'estado', 'responsable', 'actualizado', 'notas'],
+              ...casos.map((caso) =>
               [
                 caso.id,
                 caso.municipio,
@@ -476,10 +565,20 @@ function App() {
                 caso.responsable ?? '',
                 caso.actualizado,
                 caso.notas,
-              ]
-                .map((valor) => `"${String(valor).replaceAll('"', '""')}"`)
-                .join(','),
-            ),
+              ]),
+            ]),
+            '',
+            '# asignaciones',
+            csv([
+              ['id', 'casoId', 'equipo', 'estado', 'eta', 'responsable', 'bloqueo'],
+              ...asignaciones.map((item) => [item.id, item.casoId, item.equipo, item.estado, item.eta, item.responsable, item.bloqueo]),
+            ]),
+            '',
+            '# solicitudes',
+            csv([
+              ['id', 'casoId', 'item', 'cantidad', 'entregado', 'punto', 'estado'],
+              ...solicitudes.map((item) => [item.id, item.casoId, item.item, item.cantidad, item.entregado, item.punto, item.estado]),
+            ]),
           ].join('\n')
     const blob = new Blob([contenido], { type: tipo === 'json' ? 'application/json' : 'text/csv' })
     const url = URL.createObjectURL(blob)
@@ -522,7 +621,7 @@ function App() {
           <NavButton active={vista === 'operaciones'} icon={<Activity />} label="Operaciones" onClick={() => setVista('operaciones')} />
           <NavButton active={vista === 'ingreso'} icon={<ClipboardCheck />} label="Ingreso" onClick={() => setVista('ingreso')} />
           <NavButton active={vista === 'recursos'} icon={<PackageCheck />} label="Recursos" onClick={() => setVista('recursos')} />
-          <NavButton active={vista === 'voluntarios'} icon={<Users />} label="Voluntarios" onClick={() => setVista('voluntarios')} />
+          <NavButton active={vista === 'voluntarios'} icon={<Users />} label="Directorio" onClick={() => setVista('voluntarios')} />
           <NavButton active={vista === 'albergues'} icon={<Warehouse />} label="Albergues" onClick={() => setVista('albergues')} />
           <NavButton active={vista === 'personas'} icon={<ShieldCheck />} label="Personas" onClick={() => setVista('personas')} />
         </nav>
@@ -578,7 +677,7 @@ function App() {
 
         {vista === 'operaciones' && (
           <>
-            <Metricas casos={casos} />
+            <Riesgos riesgos={riesgos} setFiltro={setFiltro} />
             <section className="console-grid">
               <div className="panel queue-panel">
                 <div className="panel-header">
@@ -590,34 +689,36 @@ function App() {
                   <button className={filtro === 'criticas' ? 'active' : ''} onClick={() => setFiltro('criticas')}>Críticos</button>
                   <button className={filtro === 'sin-verificar' ? 'active' : ''} onClick={() => setFiltro('sin-verificar')}>Sin verificar</button>
                   <button className={filtro === 'sin-asignar' ? 'active' : ''} onClick={() => setFiltro('sin-asignar')}>Sin asignar</button>
+                  <button className={filtro === 'bloqueadas' ? 'active' : ''} onClick={() => setFiltro('bloqueadas')}>Bloqueadas</button>
+                  <button className={filtro === 'riesgo-albergue' ? 'active' : ''} onClick={() => setFiltro('riesgo-albergue')}>Riesgo albergue</button>
+                  <button className={filtro === 'brechas' ? 'active' : ''} onClick={() => setFiltro('brechas')}>Brechas</button>
                   {necesidades.map((necesidad) => <button key={necesidad} className={filtro === necesidad ? 'active' : ''} onClick={() => setFiltro(necesidad)}>{necesidadLabel[necesidad]}</button>)}
                 </div>
                 <div className="case-list">
-                  {filtrados.length ? filtrados.map((caso) => <CasoFila key={caso.id} caso={caso} onEstado={cambiarEstado} />) : <Empty text="No hay casos con este filtro." />}
+                  {filtrados.length ? filtrados.map((caso) => (
+                    <CasoFila
+                      key={caso.id}
+                      caso={caso}
+                      activo={casoActivo?.id === caso.id}
+                      onEstado={cambiarEstado}
+                      onSeleccionar={seleccionarCaso}
+                    />
+                  )) : <Empty text="No hay casos con este filtro." />}
                 </div>
               </div>
-              <div className="panel">
-                <h2><Route size={19} /> Siguiente mejor acción</h2>
-                {casoMasUrgente ? (
-                  <div className="next-action">
-                    <strong>{casoMasUrgente.id} · {casoMasUrgente.municipio}</strong>
-                    <p>{casoMasUrgente.notas}</p>
-                    <span>Recomendación: verificar fuente, llamar contacto y asignar equipo con habilidad {necesidadLabel[casoMasUrgente.necesidad]}.</span>
-                  </div>
-                ) : <p>No hay casos abiertos.</p>}
-                <h2><ShieldCheck size={19} /> Verificación</h2>
-                <div className="verification-list">
-                  <MiniRow title="Fuente local" body="PMU municipal, Cruz Roja local o enlace comunitario." status="confiable" />
-                  <MiniRow title="Evidencia mínima" body="Hora, lugar, necesidad, personas afectadas y quién reporta." status="revisar" />
-                  <MiniRow title="Privacidad" body="Contactos y notas quedan internos; revisa antes de exportar." status="interno" />
-                </div>
-                <h2><MapPinned size={19} /> Vista territorial</h2>
-                <div className="map-board">
-                  {casos.map((caso, index) => (
-                    <button key={caso.id} className={`pin ${caso.prioridad}`} style={{ left: `${16 + index * 14}%`, top: `${24 + (index % 4) * 14}%` }} title={`${caso.municipio}: ${caso.necesidad}`} />
-                  ))}
-                </div>
-              </div>
+              <CasoDetalle
+                caso={casoActivo}
+                asignaciones={asignaciones}
+                solicitudes={solicitudes}
+                equipos={equiposSugeridos}
+                recursos={recursosSugeridos}
+                albergues={alberguesSugeridos}
+                onEstado={cambiarEstado}
+                onAsignar={(caso) => {
+                  seleccionarCaso(caso)
+                  setNuevaAsignacion((actual) => ({ ...actual, casoId: caso.id }))
+                }}
+              />
             </section>
             <section className="support-grid">
               <Assignments
@@ -625,10 +726,15 @@ function App() {
                 solicitudes={solicitudes}
                 casos={abiertos}
                 voluntarios={voluntarios}
+                casoActivo={casoActivo}
                 formulario={nuevaAsignacion}
                 setFormulario={setNuevaAsignacion}
                 agregarAsignacion={agregarAsignacion}
                 actualizarAsignacion={actualizarAsignacion}
+                solicitudFormulario={nuevaSolicitud}
+                setSolicitudFormulario={setNuevaSolicitud}
+                agregarSolicitud={agregarSolicitud}
+                actualizarSolicitud={actualizarSolicitud}
               />
               <Sitrep casos={casos} />
             </section>
@@ -639,7 +745,7 @@ function App() {
         {vista === 'recursos' && <Recursos brechas={brechas} recursos={recursos} formulario={nuevoRecurso} setFormulario={setNuevoRecurso} agregarRecurso={agregarRecurso} actualizarRecurso={actualizarRecurso} />}
         {vista === 'voluntarios' && <Voluntarios voluntarios={voluntarios} casos={abiertos} formulario={nuevoVoluntario} setFormulario={setNuevoVoluntario} agregarVoluntario={agregarVoluntario} actualizarVoluntario={actualizarVoluntario} />}
         {vista === 'albergues' && <Albergues albergues={albergues} formulario={nuevoAlbergue} setFormulario={setNuevoAlbergue} agregarAlbergue={agregarAlbergue} actualizarAlbergue={actualizarAlbergue} />}
-        {vista === 'personas' && <Personas personas={personas} formulario={nuevaPersona} setFormulario={setNuevaPersona} agregarPersona={agregarPersona} actualizarPersona={actualizarPersona} />}
+        {vista === 'personas' && <Personas personas={personas} formulario={nuevaPersona} setFormulario={setNuevaPersona} agregarPersona={agregarPersona} actualizarPersona={actualizarPersona} privacidadOk={privacidadPersonaOk} setPrivacidadOk={setPrivacidadPersonaOk} />}
       </section>
     </main>
   )
@@ -649,36 +755,37 @@ function NavButton({ active, icon, label, onClick }: { active: boolean; icon: Re
   return <button className={active ? 'nav active' : 'nav'} onClick={onClick}>{icon}<span>{label}</span></button>
 }
 
-function Metricas({ casos }: { casos: Caso[] }) {
-  const abiertos = casos.filter((caso) => caso.estado !== 'resuelto')
+function Riesgos({ riesgos, setFiltro }: { riesgos: { criticos: number; sinVerificar: number; verificadosSinAsignar: number; bloqueadas: number; albergue: number; brechas: number }; setFiltro: (filtro: Filtro) => void }) {
   return (
-    <section className="metrics">
-      <Metric icon={<Activity />} label="Casos abiertos" value={abiertos.length} />
-      <Metric icon={<HeartPulse />} label="Críticos" value={casos.filter((caso) => caso.prioridad === 'critica').length} />
-      <Metric icon={<Truck />} label="Asignados" value={casos.filter((caso) => caso.estado === 'asignado').length} />
-      <Metric icon={<CheckCircle2 />} label="Resueltos" value={casos.filter((caso) => caso.estado === 'resuelto').length} />
+    <section className="risk-band" aria-label="Riesgos operativos">
+      <RiskTile icon={<HeartPulse />} label="Críticos" value={riesgos.criticos} tone="critical" onClick={() => setFiltro('criticas')} />
+      <RiskTile icon={<ShieldCheck />} label="Sin verificar" value={riesgos.sinVerificar} tone="warn" onClick={() => setFiltro('sin-verificar')} />
+      <RiskTile icon={<Route />} label="Verificados sin asignar" value={riesgos.verificadosSinAsignar} tone="warn" onClick={() => setFiltro('sin-asignar')} />
+      <RiskTile icon={<Truck />} label="Asignaciones bloqueadas" value={riesgos.bloqueadas} tone="blocked" onClick={() => setFiltro('bloqueadas')} />
+      <RiskTile icon={<Warehouse />} label="Albergues en riesgo" value={riesgos.albergue} tone="warn" onClick={() => setFiltro('riesgo-albergue')} />
+      <RiskTile icon={<PackageCheck />} label="Brechas / solicitudes" value={riesgos.brechas} tone="warn" onClick={() => setFiltro('brechas')} />
     </section>
   )
 }
 
-function Metric({ icon, label, value }: { icon: ReactNode; label: string; value: number }) {
-  return <div className="metric">{icon}<span>{label}</span><strong>{value}</strong></div>
+function RiskTile({ icon, label, value, tone, onClick }: { icon: ReactNode; label: string; value: number; tone: 'critical' | 'warn' | 'blocked'; onClick: () => void }) {
+  return <button className={`risk-tile ${tone}`} onClick={onClick}>{icon}<span>{label}</span><strong>{value}</strong></button>
 }
 
 function Step({ n, title, text }: { n: string; title: string; text: string }) {
   return <article><span>{n}</span><strong>{title}</strong><p>{text}</p></article>
 }
 
-function CasoFila({ caso, onEstado }: { caso: Caso; onEstado: (id: string, estado: Estado) => void }) {
+function CasoFila({ caso, activo, onEstado, onSeleccionar }: { caso: Caso; activo: boolean; onEstado: (id: string, estado: Estado) => void; onSeleccionar: (caso: Caso) => void }) {
   return (
-    <article className={`case-row ${caso.prioridad}`}>
-      <div>
+    <article className={`case-row ${caso.prioridad} ${activo ? 'selected' : ''}`}>
+      <button className="case-main" type="button" onClick={() => onSeleccionar(caso)}>
         <div className="row-title"><strong>{caso.id}</strong><span>{caso.municipio}, {caso.departamento}</span></div>
         <p>{caso.notas}</p>
         <div className="meta">
           <span>{necesidadLabel[caso.necesidad]}</span><span>{prioridadLabel[caso.prioridad]}</span><span>{caso.personas} personas</span><span>{caso.coordenadas || 'sin coordenadas'}</span>
         </div>
-      </div>
+      </button>
       <div className="status-box">
         <select value={caso.estado} onChange={(e) => onEstado(caso.id, e.target.value as Estado)}>
           {estados.map((estado) => <option key={estado} value={estado}>{estadoLabel[estado]}</option>)}
@@ -687,6 +794,74 @@ function CasoFila({ caso, onEstado }: { caso: Caso; onEstado: (id: string, estad
       </div>
     </article>
   )
+}
+
+function CasoDetalle({ caso, asignaciones, solicitudes, equipos, recursos, albergues, onEstado, onAsignar }: {
+  caso: Caso | null
+  asignaciones: Asignacion[]
+  solicitudes: Solicitud[]
+  equipos: Voluntario[]
+  recursos: Recurso[]
+  albergues: Albergue[]
+  onEstado: (id: string, estado: Estado) => void
+  onAsignar: (caso: Caso) => void
+}) {
+  if (!caso) {
+    return <section className="panel"><Empty text="Selecciona un caso para ver verificación, sugerencias y acciones." /></section>
+  }
+  const asignacionCaso = asignaciones.find((item) => item.casoId === caso.id)
+  const solicitudesCaso = solicitudes.filter((item) => item.casoId === caso.id)
+  return (
+    <section className="panel detail-panel">
+      <div className="detail-head">
+        <div>
+          <h2><Route size={19} /> Caso seleccionado</h2>
+          <strong>{caso.id} · {caso.municipio}</strong>
+          <p>{necesidadLabel[caso.necesidad]} · {prioridadLabel[caso.prioridad]} · {caso.personas} personas</p>
+        </div>
+        <span className={`status-pill ${caso.estado}`}>{estadoLabel[caso.estado]}</span>
+      </div>
+
+      <div className="next-action">
+        <strong>Siguiente acción</strong>
+        <p>{caso.estado === 'nuevo' ? 'Confirmar fuente, hora, ubicación y alcance antes de asignar.' : caso.estado === 'verificado' ? 'Asignar equipo compatible y abrir solicitud de insumo si falta cobertura.' : asignacionCaso?.estado === 'bloqueado' ? 'Resolver bloqueo operativo antes de mover ETA.' : 'Dar seguimiento a ETA, evidencia de atención y cierre.'}</p>
+      </div>
+
+      <h2><ShieldCheck size={19} /> Lista de verificación</h2>
+      <div className="verification-list">
+        <CheckItem listo={Boolean(caso.contacto)} texto="Contacto operativo o fuente local registrada" />
+        <CheckItem listo={Boolean(caso.notas && caso.notas.length > 20)} texto="Necesidad, alcance y evidencia mínima descritos" />
+        <CheckItem listo={Boolean(caso.coordenadas || caso.municipio)} texto="Ubicación accionable para despacho" />
+        <CheckItem listo={caso.estado !== 'nuevo'} texto="Revisión completada antes de exportar o asignar públicamente" />
+      </div>
+
+      <h2><Sparkles size={19} /> Sugerencias</h2>
+      <div className="suggestions">
+        <MiniRow title="Equipo" body={equipos.map((item) => `${item.nombre} (${item.estado})`).join(', ') || 'Sin equipo compatible disponible'} status="matching" />
+        <MiniRow title="Recurso" body={recursos.map((item) => `${item.nombre} · ${item.cantidad}`).join(', ') || 'Crear solicitud de insumo'} status="inventario" />
+        <MiniRow title="Albergue" body={albergues.map((item) => `${item.nombre} · ${item.capacidad - item.ocupacion} cupos`).join(', ') || 'Sin cupos sugeridos'} status="capacidad" />
+      </div>
+
+      <div className="quick-actions">
+        <button onClick={() => onEstado(caso.id, 'verificado')} disabled={caso.estado !== 'nuevo'}><CheckCircle2 size={17} /> Marcar verificado</button>
+        <button className="primary" onClick={() => onAsignar(caso)}><Truck size={17} /> Preparar asignación</button>
+      </div>
+
+      <h2><PackageCheck size={19} /> Solicitudes del caso</h2>
+      <div className="stack tight">
+        {solicitudesCaso.length ? solicitudesCaso.map((item) => <article key={item.id}><strong>{item.item}</strong><p>{item.entregado}/{item.cantidad} · {item.punto}</p><span className="pill">{item.estado}</span></article>) : <Empty text="No hay solicitudes registradas para este caso." />}
+      </div>
+
+      <h2><MapPinned size={19} /> Vista territorial</h2>
+      <div className="map-board">
+        <button className={`pin ${caso.prioridad}`} style={{ left: '48%', top: '44%' }} title={`${caso.municipio}: ${caso.necesidad}`} />
+      </div>
+    </section>
+  )
+}
+
+function CheckItem({ listo, texto }: { listo: boolean; texto: string }) {
+  return <div className={listo ? 'check-item done' : 'check-item'}><CheckCircle2 size={16} /><span>{texto}</span></div>
 }
 
 function Ingreso({ formulario, setFormulario, agregarCaso }: {
@@ -804,7 +979,7 @@ function Voluntarios({ voluntarios, casos, formulario, setFormulario, agregarVol
   return (
     <section className="two-column">
       <div className="panel">
-        <h2><Users size={19} /> Nuevo equipo / usuario</h2>
+        <h2><Users size={19} /> Nuevo registro de directorio</h2>
         <form onSubmit={agregarVoluntario}>
           <div className="form-grid">
             <label>Nombre<input value={formulario.nombre} onChange={(e) => setFormulario({ ...formulario, nombre: e.target.value })} required /></label>
@@ -816,11 +991,11 @@ function Voluntarios({ voluntarios, casos, formulario, setFormulario, agregarVol
           </div>
           <label>Contacto operativo<input value={formulario.contacto} onChange={(e) => setFormulario({ ...formulario, contacto: e.target.value })} /></label>
           <label>Habilidades<SelectorNecesidades value={formulario.habilidades} onChange={(habilidades) => setFormulario({ ...formulario, habilidades })} /></label>
-          <button className="primary wide" type="submit">Guardar equipo</button>
+          <button className="primary wide" type="submit">Guardar registro</button>
         </form>
       </div>
       <div className="panel">
-        <h2><Users size={19} /> Equipos y asignaciones sugeridas</h2>
+        <h2><Users size={19} /> Directorio y asignaciones sugeridas</h2>
         <div className="roster-grid single">
           {voluntarios.map((voluntario) => {
             const sugeridos = casos.filter((caso) => voluntario.habilidades.includes(caso.necesidad)).slice(0, 2)
@@ -892,17 +1067,25 @@ function Albergues({ albergues, formulario, setFormulario, agregarAlbergue, actu
   )
 }
 
-function Personas({ personas, formulario, setFormulario, agregarPersona, actualizarPersona }: {
+function Personas({ personas, formulario, setFormulario, agregarPersona, actualizarPersona, privacidadOk, setPrivacidadOk }: {
   personas: Persona[]
   formulario: Omit<Persona, 'id' | 'actualizado'>
   setFormulario: (valor: Omit<Persona, 'id' | 'actualizado'>) => void
   agregarPersona: (evento: FormEvent) => void
   actualizarPersona: (id: string, cambios: Partial<Persona>) => void
+  privacidadOk: boolean
+  setPrivacidadOk: (valor: boolean) => void
 }) {
   return (
     <section className="panel focused">
       <h2><ShieldCheck size={19} /> Verificación mínima de personas</h2>
-      <p className="helper">Registra solo grupos o referencias mínimas. Evita nombres completos, cédulas o datos médicos.</p>
+      <p className="helper">Registra solo grupos o referencias mínimas. Evita nombres completos, cédulas, direcciones privadas o datos médicos.</p>
+      <div className="privacy-box">
+        <strong>Lista de privacidad</strong>
+        <span>Usa etiqueta de grupo, no nombre completo.</span>
+        <span>Guarda solo municipio y contacto operativo.</span>
+        <span>Revisa la nota antes de exportar.</span>
+      </div>
       <form onSubmit={agregarPersona}>
         <div className="form-grid">
           <label>Etiqueta segura<input value={formulario.etiqueta} onChange={(e) => setFormulario({ ...formulario, etiqueta: e.target.value })} placeholder="Ej. Grupo familiar zona norte" required /></label>
@@ -910,8 +1093,9 @@ function Personas({ personas, formulario, setFormulario, agregarPersona, actuali
           <label>Estado<select value={formulario.estado} onChange={(e) => setFormulario({ ...formulario, estado: e.target.value as Persona['estado'] })}><option value="sin confirmar">Sin confirmar</option><option value="a salvo">A salvo</option><option value="requiere ayuda">Requiere ayuda</option></select></label>
           <label>Contacto operativo<input value={formulario.contacto} onChange={(e) => setFormulario({ ...formulario, contacto: e.target.value })} /></label>
         </div>
-        <label>Última nota<textarea rows={3} value={formulario.ultimaNota} onChange={(e) => setFormulario({ ...formulario, ultimaNota: e.target.value })} required /></label>
-        <button className="primary wide" type="submit">Guardar check-in</button>
+        <label>Última nota mínima<textarea rows={3} value={formulario.ultimaNota} onChange={(e) => setFormulario({ ...formulario, ultimaNota: e.target.value })} placeholder="Estado observado, fuente operativa y acción pendiente. Sin detalles sensibles." required /></label>
+        <label className="check-row privacy-confirm"><input type="checkbox" checked={privacidadOk} onChange={(e) => setPrivacidadOk(e.target.checked)} required /><span>Confirmo que el registro usa identidad mínima y no contiene datos sensibles.</span></label>
+        <button className="primary wide" type="submit" disabled={!privacidadOk}>Guardar check-in</button>
       </form>
       <div className="stack section-gap">
         {personas.map((persona) => (
@@ -935,25 +1119,35 @@ function MiniRow({ title, body, status }: { title: string; body: string; status:
   return <article className="mini-row"><strong>{title}</strong><p>{body}</p><span>{status}</span></article>
 }
 
-function Assignments({ asignaciones, solicitudes, casos, voluntarios, formulario, setFormulario, agregarAsignacion, actualizarAsignacion }: {
+function Assignments({ asignaciones, solicitudes, casos, voluntarios, casoActivo, formulario, setFormulario, agregarAsignacion, actualizarAsignacion, solicitudFormulario, setSolicitudFormulario, agregarSolicitud, actualizarSolicitud }: {
   asignaciones: Asignacion[]
   solicitudes: Solicitud[]
   casos: Caso[]
   voluntarios: Voluntario[]
-  formulario: Omit<Asignacion, 'id'>
-  setFormulario: (valor: Omit<Asignacion, 'id'>) => void
+  casoActivo: Caso | null
+  formulario: AsignacionForm
+  setFormulario: (valor: AsignacionForm) => void
   agregarAsignacion: (evento: FormEvent) => void
   actualizarAsignacion: (id: string, cambios: Partial<Asignacion>) => void
+  solicitudFormulario: SolicitudForm
+  setSolicitudFormulario: (valor: SolicitudForm) => void
+  agregarSolicitud: (evento: FormEvent) => void
+  actualizarSolicitud: (id: string, cambios: Partial<Solicitud>) => void
 }) {
+  const casoDeFormulario = casos.find((caso) => caso.id === formulario.casoId) ?? casoActivo
+  const equiposCompatibles = casoDeFormulario ? voluntarios.filter((equipo) => equipo.habilidades.includes(casoDeFormulario.necesidad)) : voluntarios
   return (
     <section className="panel">
       <h2><Truck size={19} /> Tablero de asignaciones</h2>
+      {casoActivo && <p className="helper">Caso activo: {casoActivo.id} · {casoActivo.municipio}. Los campos toman sugerencias del caso seleccionado.</p>}
       <form className="inline-form" onSubmit={agregarAsignacion}>
         <div className="form-grid compact">
           <label>Caso<select value={formulario.casoId} onChange={(e) => setFormulario({ ...formulario, casoId: e.target.value })} required><option value="">Seleccionar</option>{casos.map((caso) => <option key={caso.id} value={caso.id}>{caso.id} · {caso.municipio}</option>)}</select></label>
-          <label>Equipo<select value={formulario.equipo} onChange={(e) => setFormulario({ ...formulario, equipo: e.target.value })} required><option value="">Seleccionar</option>{voluntarios.map((equipo) => <option key={equipo.id} value={equipo.nombre}>{equipo.nombre}</option>)}</select></label>
+          <label>Equipo<select value={formulario.equipo} onChange={(e) => setFormulario({ ...formulario, equipo: e.target.value })} required><option value="">Seleccionar</option>{equiposCompatibles.map((equipo) => <option key={equipo.id} value={equipo.nombre}>{equipo.nombre} · {equipo.estado}</option>)}</select></label>
+          <label>Estado<select value={formulario.estado} onChange={(e) => setFormulario({ ...formulario, estado: e.target.value as Asignacion['estado'] })}><option value="aceptado">Aceptado</option><option value="en ruta">En ruta</option><option value="en sitio">En sitio</option><option value="bloqueado">Bloqueado</option><option value="completado">Completado</option></select></label>
           <label>ETA<input value={formulario.eta} onChange={(e) => setFormulario({ ...formulario, eta: e.target.value })} /></label>
           <label>Responsable<input value={formulario.responsable} onChange={(e) => setFormulario({ ...formulario, responsable: e.target.value })} /></label>
+          <label>Nota de bloqueo<input value={formulario.bloqueo ?? ''} onChange={(e) => setFormulario({ ...formulario, bloqueo: e.target.value })} placeholder="Solo si está bloqueada" /></label>
         </div>
         <button className="primary wide" type="submit">Crear asignación</button>
       </form>
@@ -964,16 +1158,40 @@ function Assignments({ asignaciones, solicitudes, casos, voluntarios, formulario
             <p>{item.responsable || 'sin responsable'} · ETA {item.eta}</p>
             <div className="edit-row">
               <select value={item.estado} onChange={(e) => actualizarAsignacion(item.id, { estado: e.target.value as Asignacion['estado'] })}>
-                <option value="aceptado">Aceptado</option><option value="en ruta">En ruta</option><option value="en sitio">En sitio</option><option value="bloqueado">Bloqueado</option>
+                <option value="aceptado">Aceptado</option><option value="en ruta">En ruta</option><option value="en sitio">En sitio</option><option value="bloqueado">Bloqueado</option><option value="completado">Completado</option>
               </select>
               <input value={item.eta} onChange={(e) => actualizarAsignacion(item.id, { eta: e.target.value })} aria-label="ETA" />
+              <input value={item.bloqueo ?? ''} onChange={(e) => actualizarAsignacion(item.id, { bloqueo: e.target.value })} aria-label="Nota de bloqueo" placeholder="bloqueo" />
             </div>
           </article>
         ))}
       </div>
       <h2><PackageCheck size={19} /> Solicitudes concretas</h2>
+      <form className="inline-form" onSubmit={agregarSolicitud}>
+        <div className="form-grid compact">
+          <label>Caso<select value={solicitudFormulario.casoId} onChange={(e) => setSolicitudFormulario({ ...solicitudFormulario, casoId: e.target.value })} required><option value="">Seleccionar</option>{casos.map((caso) => <option key={caso.id} value={caso.id}>{caso.id} · {caso.municipio}</option>)}</select></label>
+          <label>Insumo<input value={solicitudFormulario.item} onChange={(e) => setSolicitudFormulario({ ...solicitudFormulario, item: e.target.value })} required /></label>
+          <label>Cantidad requerida<input value={solicitudFormulario.cantidad} onChange={(e) => setSolicitudFormulario({ ...solicitudFormulario, cantidad: e.target.value })} required /></label>
+          <label>Entregado<input value={solicitudFormulario.entregado} onChange={(e) => setSolicitudFormulario({ ...solicitudFormulario, entregado: e.target.value })} /></label>
+          <label>Punto de entrega<input value={solicitudFormulario.punto} onChange={(e) => setSolicitudFormulario({ ...solicitudFormulario, punto: e.target.value })} required /></label>
+          <label>Estado<select value={solicitudFormulario.estado} onChange={(e) => setSolicitudFormulario({ ...solicitudFormulario, estado: e.target.value as Solicitud['estado'] })}><option value="abierta">Abierta</option><option value="comprometida">Comprometida</option><option value="cubierta">Cubierta</option></select></label>
+        </div>
+        <button className="primary wide" type="submit">Crear solicitud</button>
+      </form>
       <div className="stack tight">
-        {solicitudes.map((item) => <article key={item.id}><strong>{item.item}</strong><p>{item.casoId} · {item.entregado}/{item.cantidad} · {item.punto}</p><span className="pill">{item.estado}</span></article>)}
+        {solicitudes.map((item) => (
+          <article key={item.id}>
+            <strong>{item.item}</strong>
+            <p>{item.casoId} · {item.entregado}/{item.cantidad} · {item.punto}</p>
+            <div className="edit-row">
+              <span className="pill">{item.estado}</span>
+              <select value={item.estado} onChange={(e) => actualizarSolicitud(item.id, { estado: e.target.value as Solicitud['estado'] })}>
+                <option value="abierta">Abierta</option><option value="comprometida">Comprometida</option><option value="cubierta">Cubierta</option>
+              </select>
+              <input value={item.entregado} onChange={(e) => actualizarSolicitud(item.id, { entregado: e.target.value })} aria-label="Entregado" />
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   )

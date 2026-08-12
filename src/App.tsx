@@ -899,10 +899,10 @@ function App() {
     <main className={`app vista-${vista}`}>
       <aside className="sidebar">
         <div className="brand-mark">
-          <span>RC</span>
+          <span>A2253</span>
           <div>
             <strong>Ruta Colombia</strong>
-            <small>Mesa de coordinación</small>
+            <small>Ape 2253 · coordinación de rescate</small>
           </div>
         </div>
         <nav>
@@ -917,6 +917,13 @@ function App() {
         <div className="sidebar-note">
           <Bell size={16} />
           <span>Datos locales. Exporta solo información verificada.</span>
+        </div>
+        <div className="ape-credit" aria-label="Tratamiento de marca Ape 2253">
+          <span><Radio size={17} /></span>
+          <div>
+            <strong>Ape 2253</strong>
+            <small>Coordinador de rescate: radio, triage y despacho.</small>
+          </div>
         </div>
         <div className="lulo-credit" aria-label="Construido por Lulo Studios">
           <span className="lulo-orb">L</span>
@@ -935,7 +942,7 @@ function App() {
             <p>Registra reportes, prioriza casos y coordina equipos locales.</p>
           </div>
           <div className="topbar-tools">
-            <span className="studio-chip">Lulo Studios · utilidad pública</span>
+            <span className="studio-chip">Ape 2253 / Rescue Coordinator</span>
             <div className="actions">
               <button onClick={() => exportar('csv')} title="Descargar casos en CSV"><FileDown size={18} /> CSV</button>
               <button onClick={() => exportar('json')} title="Descargar paquete JSON"><Download size={18} /> JSON</button>
@@ -1122,6 +1129,16 @@ function InicioGuiado({ flujo, setFlujo, rol, setRol, guia, setGuia, paso, setPa
         <div>
           <p className="eyebrow"><UserRound size={16} /> Modo guiado</p>
           <h2>¿Qué necesitas hacer ahora?</h2>
+        </div>
+        <div className="mascot-card" aria-label="Ape 2253 coordinador de rescate">
+          <div className="mascot-mark">
+            <span>2253</span>
+            <Radio size={20} />
+          </div>
+          <div>
+            <strong>Ape 2253 / Coordinador de rescate</strong>
+            <p>Marca operativa para triage, radio y despacho. Sin imagen externa; lista para reemplazar por arte verificado del token.</p>
+          </div>
         </div>
         <div className="guided-actions">
           <button className={flujo === 'necesidad' ? 'big-action active' : 'big-action'} onClick={() => setFlujo('necesidad')}>

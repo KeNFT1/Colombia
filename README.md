@@ -1,62 +1,166 @@
-# Mesa de Respuesta - Sismo Colombia
+# Colombia Relief Router
 
-Aplicación local-first para coordinar reportes, verificación, asignaciones, recursos, albergues y reportes SITREP después del sismo en Colombia del 10 de agosto de 2026.
+Spanish-first, local-first disaster-response router for converting field reports into verified, assigned relief work after a major earthquake in Colombia.
 
-Tema visual construido con la línea sobria de Lulo Studios: fondo oscuro, tarjetas elevadas, acentos morados y uso mínimo de amarillo colombiano para señales de atención.
+Colombia Relief Router is built for a municipal or volunteer coordination desk that needs to answer: what is urgent, what is verified, who owns it, what is blocked, and what can safely be shared?
 
-## Ejecutar
+## Resumen en español
+
+**Colombia Relief Router** es una mesa operativa para respuesta a desastres. Permite registrar necesidades, verificar reportes, asignar equipos, administrar recursos y albergues, hacer check-ins seguros de personas/grupos, y exportar SITREPs en formatos copiables.
+
+La UX es primero en español, funciona en el navegador, guarda datos en `localStorage` y evita depender de un mapa falso o de un backend que no existe.
+
+## Demo
+
+- Local app: `npm run dev`
+- Production build: `npm run build`
+- Hosting project: configured in `.openai/hosting.json`
+- Live URL: https://mesa-respuesta-colombia.korion2525.chatgpt.site/
+- Collaboration repo: https://github.com/KeNFT1/Colombia
+
+## Core Features
+
+| Area | What it does | Safety posture |
+| --- | --- | --- |
+| Guided intake | One-question-at-a-time flows for reporting a need or offering help | Spanish plain-language prompts and sensitive-data reminders |
+| Crisis feed | Sorts open cases by criticality, verification state, assignment state, blockers, and recency | List-first triage avoids fake live-map confidence |
+| Verification | Tracks minimum checks before assignment or sharing | New reports must be verified before suggested assignment confirmation |
+| Assignment | Suggests compatible teams by need and availability, then creates ETA-backed assignments | Requires explicit confirmation |
+| Resources | Tracks supplies, transport, communications gear, shelter capacity, and requests | Exportable operational records |
+| People check-ins | Uses safe labels for families/groups and requires privacy acknowledgement | No full names, IDs, private addresses, or medical details |
+| SITREP | Generates copyable WhatsApp, radio, and email formats | Includes a privacy guardrail in every report |
+| Export | Downloads JSON and CSV packages from local data | User controls what leaves the browser |
+
+## Quick Start
 
 ```bash
 npm install
 npm run dev
+```
+
+Open the Vite URL shown in your terminal.
+
+## Test And Build
+
+```bash
 npm test
+npm run lint
 npm run build
 ```
 
-`npm test` ejecuta pruebas de componente con Vitest, Testing Library y jsdom para el inicio guiado, reportes, ofertas de ayuda, asignaciones, CRUD operativo y exportación JSON.
+What these cover:
 
-## Qué hace
+- `npm test`: Vitest + Testing Library component coverage for guided intake, resource offers, assignment confirmation, CRUD paths, persistence, and export.
+- `npm run lint`: Oxlint static checks.
+- `npm run build`: TypeScript project build, Vite production build, and `scripts/build-sites-worker.js`.
 
-- Inicio guiado en español con tres acciones grandes: reportar ayuda necesaria, ofrecer recursos/ayuda y coordinar casos.
-- En móvil, la pantalla inicial oculta navegación/exportación para que las tres acciones de emergencia aparezcan primero.
-- Selector de rol para ciudadano/enlace comunitario, voluntario, coordinador, albergue y logística, guardado localmente.
-- Flujo de reporte una pregunta a la vez: necesidad, ubicación, personas afectadas, urgencia, contacto y revisión.
-- Flujo guiado para ofrecer ayuda: registra insumos/cupos como `Recurso` o equipos/personas como `Voluntario` en el mismo localStorage.
-- Plantillas rápidas para agua, salud/heridos, familias sin albergue, vía bloqueada y persona no localizada.
-- Vista de coordinación con lenguaje claro y feed completo ordenado por crítico, nuevo, verificado/sin asignar, asignado, bloqueado y reciente.
-- Asignación sugerida con confirmación explícita; los casos nuevos deben verificarse antes de confirmar asignación.
-- Botón grande para crear un reporte SITREP copiable con variantes WhatsApp, radio y email.
-- Resumen operativo con casos abiertos, críticos, asignados y cerrados.
-- Registro de reportes con campos seguros y placeholders para fuentes locales.
-- Cola de casos con filtros de acción: todos, críticos, sin verificar, sin asignar y por necesidad.
-- Mesa de verificación con criterios mínimos antes de asignar o exportar.
-- Tablero de asignaciones con ETA, responsable y estado.
-- Solicitudes concretas de suministros por caso.
-- Inventario editable con estado, ubicación, cantidad y responsable operativo.
-- Equipos/usuarios editables con rol de coordinador, verificador o voluntario, estado, turno y habilidades.
-- Albergues editables con capacidad, ocupación, estado, responsable y necesidades.
-- Check-ins de personas/grupos con etiqueta segura, estado y nota mínima.
-- Asignaciones de casos a equipos con ETA, responsable y estado; al crear una asignación el caso queda marcado como asignado.
-- SITREP copiable y exportación CSV/JSON con casos, equipos, recursos, albergues, personas, asignaciones y solicitudes.
+## How To Use
 
-## Límites de seguridad
+1. Start on **Inicio**.
+2. Choose **Reportar ayuda necesaria**, **Tengo recursos / puedo ayudar**, or **Coordinar casos**.
+3. Select the current role: ciudadano/enlace, voluntario, coordinador, albergue, or logistica.
+4. Enter only operationally necessary information.
+5. Verify reports before assigning teams or sharing summaries.
+6. Use **Crear reporte para compartir** for SITREP text.
+7. Export JSON/CSV before changing browser, device, or deployment.
 
-Los datos se guardan en `localStorage` del navegador. No ingreses cédulas, historias clínicas, direcciones privadas completas ni nombres completos de personas vulnerables si vas a compartir exportaciones. Contactos, notas y verificaciones deben revisarse antes de publicar.
+## Architecture
 
-## Ideas evaluadas
+This is a React/Vite/TypeScript single-page app.
 
-1. Mesa operativa local-first: mayor impacto porque convierte reportes dispersos en trabajo verificable y asignable.
-2. Mapa público de necesidades: útil, pero requiere fuerte verificación y redacción.
-3. Matching de donaciones: útil después, cuando existan socios confiables.
-4. Registro público de desaparecidos: valor humanitario alto, riesgo alto; aquí se mantiene como chequeo mínimo local.
-5. Resumen automático de noticias: menor impacto que coordinación accionable.
+```text
+src/
+  App.tsx        Main domain model, seeded data, localStorage persistence, UI flows
+  App.css        Operational visual system and responsive layout
+  index.css      Global browser defaults
+  App.test.tsx   Component and workflow tests
+docs/
+  PRD.md                  Operations-desk product requirements
+  GUIDED_RESPONSE_PRD.md  Guided response mode requirements
+  BRAND.md               BAYC #2253 rescue-coordinator treatment
+  CONTRIBUTING.md        Collaboration and review guide
+```
 
-## Fuentes
+The app is intentionally local-first:
 
-- AP sobre el sismo M7.4 en Colombia: https://apnews.com/article/26fd40f93272d834fced47a4a673edc9
-- Alerta de la Embajada de EE. UU. sobre el sismo en Chocó: https://co.usembassy.gov/natural-disaster-alert-alert-7-4-earthquake-in-choco-august-10-2026/
-- Banco Mundial sobre gestión del riesgo de desastres en Colombia: https://blogs.worldbank.org/en/latinamerica/como-colombia-sistema-mas-resiliente-ante-desastres
+- No auth.
+- No backend API.
+- No server sync.
+- No real geocoding.
+- No automatic public publishing.
+- Browser `localStorage` is the source of truth during a session.
+
+## Data Model
+
+Main collections:
+
+- `Caso`: need report with municipality, department, need type, priority, affected count, contact/source, coordinates/reference, notes, state, owner, and update time.
+- `Voluntario`: team or person record with base, role, skills, availability, shift, state, and operational contact.
+- `Recurso`: inventory item with type, location, quantity, state, and owner.
+- `Albergue`: shelter capacity, occupancy, needs, state, and responsible contact.
+- `Persona`: privacy-minimal family/group check-in label, municipality, state, minimal note, and contact.
+- `Asignacion`: case-to-team assignment with status, ETA, owner, and optional blocker.
+- `Solicitud`: case-linked resource request with needed amount, delivered amount, point, and status.
+
+LocalStorage keys are namespaced under `colombia-relief-router-*`.
+
+## Safety And Privacy
+
+Do not enter or export:
+
+- Cedulas or government ID numbers.
+- Full names of vulnerable people.
+- Full private addresses.
+- Medical histories or diagnoses.
+- Unverified rumors as public facts.
+
+Operational guidance:
+
+- Treat all records as sensitive until verified.
+- Share SITREPs only through authorized channels.
+- Review contact, note, and people fields before export.
+- Prefer safe labels like `Grupo familiar A` over personal identifiers.
+- Keep source/contact descriptions operational, such as `enlace local de salud` or `radio despacho`.
+
+## BAYC #2253 Brand Treatment
+
+The project now includes a restrained **Ape 2253 / Rescue Coordinator** identity layer: radio, triage, dispatch, and rescue-coordination language.
+
+Important rights note: this repository does **not** include verified BAYC #2253 token artwork or trait metadata. The app therefore uses a tasteful operations-themed badge/card with token id `#2253`, not a hotlinked image or trait claim. Any future use of official Bored Ape Yacht Club #2253 artwork should only happen if the project owner controls or has rights to that token artwork.
+
+See [docs/BRAND.md](docs/BRAND.md) for usage guidance.
+
+## Collaboration
+
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
+
+Good first areas:
+
+- Add focused tests around additional guided-flow branches.
+- Add import validation for JSON restore flows.
+- Improve print/PDF SITREP formatting.
+- Add optional offline installation metadata.
+- Add screenshots and short field walkthroughs for the production app.
+
+## Roadmap
+
+- Import JSON package from another device.
+- Printable SITREP and shelter manifest views.
+- Offline/PWA install support.
+- Optional QR handoff for opening the guided mode on a phone.
+- More granular audit log for verification and assignment changes.
+- Partner-ready data dictionary for interoperating with municipal systems.
+
+## References
+
+- AP earthquake context: https://apnews.com/article/26fd40f93272d834fced47a4a673edc9
+- U.S. Embassy Colombia alert: https://co.usembassy.gov/natural-disaster-alert-alert-7-4-earthquake-in-choco-august-10-2026/
+- World Bank on disaster risk management in Colombia: https://blogs.worldbank.org/en/latinamerica/como-colombia-sistema-mas-resiliente-ante-desastres
 - Sahana Foundation: https://sahanafoundation.org/
 - Ushahidi: https://www.ushahidi.com/
 - Crisis Cleanup: https://crisiscleanup.org/about
 - KoBoToolbox: https://hhi.harvard.edu/kobotoolbox
+
+## License
+
+No license file is currently included. Add one before accepting external contributions or reuse.

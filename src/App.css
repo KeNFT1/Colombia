@@ -56,7 +56,9 @@
 }
 
 .brand-mark > span,
-.lulo-orb {
+.lulo-orb,
+.ape-credit > span,
+.mascot-mark {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
@@ -66,10 +68,11 @@
 }
 
 .brand-mark > span {
-  width: 38px;
+  width: 46px;
   height: 38px;
-  background: linear-gradient(135deg, var(--purple), var(--purple-2));
-  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.32), 0 14px 36px rgba(124, 58, 237, 0.28);
+  background: linear-gradient(135deg, #14532d, var(--purple));
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.24), 0 14px 36px rgba(20, 83, 45, 0.24);
+  font-size: 11px;
 }
 
 .brand-mark strong,
@@ -168,7 +171,8 @@ button:active:not(:disabled) {
   flex: 0 0 auto;
 }
 
-.lulo-credit {
+.lulo-credit,
+.ape-credit {
   margin: auto 8px 0;
   padding: 12px;
   border: 1px solid rgba(124, 58, 237, 0.3);
@@ -177,7 +181,17 @@ button:active:not(:disabled) {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-.lulo-credit small {
+.ape-credit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  border-color: rgba(34, 197, 94, 0.34);
+  background: rgba(20, 83, 45, 0.16);
+}
+
+.lulo-credit small,
+.ape-credit small {
   display: block;
   margin-top: 2px;
   color: var(--muted);
@@ -189,6 +203,13 @@ button:active:not(:disabled) {
   width: 30px;
   height: 30px;
   background: var(--purple);
+}
+
+.ape-credit > span {
+  width: 30px;
+  height: 30px;
+  background: #14532d;
+  color: #bbf7d0;
 }
 
 .workspace {
@@ -218,10 +239,10 @@ button:active:not(:disabled) {
   min-height: 26px;
   align-items: center;
   padding: 0 10px;
-  border: 1px solid rgba(124, 58, 237, 0.34);
+  border: 1px solid rgba(34, 197, 94, 0.34);
   border-radius: 999px;
-  background: rgba(124, 58, 237, 0.12);
-  color: #d8b4fe;
+  background: rgba(20, 83, 45, 0.16);
+  color: #bbf7d0;
   font-size: 12px;
   font-weight: 800;
 }
@@ -324,6 +345,39 @@ h2 {
   display: grid;
   gap: 18px;
   padding: 24px;
+}
+
+.mascot-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid rgba(34, 197, 94, 0.32);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(20, 83, 45, 0.24), rgba(124, 58, 237, 0.12)),
+    rgba(17, 17, 22, 0.94);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.mascot-card p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.mascot-mark {
+  width: 58px;
+  height: 58px;
+  gap: 2px;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  background: #0f2418;
+  color: #bbf7d0;
+  box-shadow: 0 12px 28px rgba(20, 83, 45, 0.24);
+}
+
+.mascot-mark span {
+  font-size: 12px;
 }
 
 .role-strip {
@@ -1300,8 +1354,14 @@ meter {
   .guided-actions,
   .resource-shortcuts,
   .step-row.simple,
-  .guided-case {
+  .guided-case,
+  .mascot-card {
     grid-template-columns: 1fr;
+  }
+
+  .mascot-mark {
+    width: 52px;
+    height: 52px;
   }
 
   .big-action {

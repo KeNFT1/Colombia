@@ -919,10 +919,10 @@ function App() {
           <span>Datos locales. Exporta solo información verificada.</span>
         </div>
         <div className="ape-credit" aria-label="Tratamiento de marca Ape 2253">
-          <span><Radio size={17} /></span>
+          <img src="/brand/ape-2253-reference.png" alt="Ape 2253 coordinador de rescate" />
           <div>
             <strong>Ape 2253</strong>
-            <small>Coordinador de rescate: radio, triage y despacho.</small>
+            <small>El coordinador de rescate visual de esta mesa.</small>
           </div>
         </div>
         <div className="lulo-credit" aria-label="Construido por Lulo Studios">
@@ -1131,13 +1131,10 @@ function InicioGuiado({ flujo, setFlujo, rol, setRol, guia, setGuia, paso, setPa
           <h2>¿Qué necesitas hacer ahora?</h2>
         </div>
         <div className="mascot-card" aria-label="Ape 2253 coordinador de rescate">
-          <div className="mascot-mark">
-            <span>2253</span>
-            <Radio size={20} />
-          </div>
+          <img className="mascot-image" src="/brand/ape-2253-reference.png" alt="Ape 2253 con gorra de coordinador" />
           <div>
             <strong>Ape 2253 / Coordinador de rescate</strong>
-            <p>Marca operativa para triage, radio y despacho. Sin imagen externa; lista para reemplazar por arte verificado del token.</p>
+            <p>La identidad visual viene de este Ape 2253: serio, de gorra, listo para radio, triage y despacho.</p>
           </div>
         </div>
         <div className="guided-actions">

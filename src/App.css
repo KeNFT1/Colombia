@@ -57,8 +57,7 @@
 
 .brand-mark > span,
 .lulo-orb,
-.ape-credit > span,
-.mascot-mark {
+.ape-credit > img {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
@@ -205,11 +204,14 @@ button:active:not(:disabled) {
   background: var(--purple);
 }
 
-.ape-credit > span {
-  width: 30px;
-  height: 30px;
+.ape-credit > img {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  object-position: center 28%;
+  border: 1px solid rgba(34, 197, 94, 0.35);
   background: #14532d;
-  color: #bbf7d0;
+  box-shadow: 0 8px 20px rgba(20, 83, 45, 0.22);
 }
 
 .workspace {
@@ -349,8 +351,8 @@ h2 {
 
 .mascot-card {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 16px;
   align-items: center;
   padding: 14px;
   border: 1px solid rgba(34, 197, 94, 0.32);
@@ -361,23 +363,20 @@ h2 {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
+.mascot-image {
+  width: 92px;
+  height: 92px;
+  object-fit: cover;
+  object-position: center 24%;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  border-radius: var(--radius);
+  background: #0f2418;
+  box-shadow: 0 14px 32px rgba(20, 83, 45, 0.26);
+}
+
 .mascot-card p {
   margin: 4px 0 0;
   color: var(--muted);
-}
-
-.mascot-mark {
-  width: 58px;
-  height: 58px;
-  gap: 2px;
-  border: 1px solid rgba(34, 197, 94, 0.35);
-  background: #0f2418;
-  color: #bbf7d0;
-  box-shadow: 0 12px 28px rgba(20, 83, 45, 0.24);
-}
-
-.mascot-mark span {
-  font-size: 12px;
 }
 
 .role-strip {
@@ -1359,9 +1358,9 @@ meter {
     grid-template-columns: 1fr;
   }
 
-  .mascot-mark {
-    width: 52px;
-    height: 52px;
+  .mascot-image {
+    width: 72px;
+    height: 72px;
   }
 
   .big-action {

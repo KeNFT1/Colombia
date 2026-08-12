@@ -2,7 +2,7 @@
 
 ## Positioning
 
-**Ape 2253 / Rescue Coordinator** is the mascot layer for Colombia Relief Router. It should feel like a calm radio-dispatch identity for urgent work, not a meme skin.
+**Ape 2253 / Rescue Coordinator** is the mascot layer for Colombia Relief Router. It is based on the owner-supplied Ape 2253 reference image in `public/brand/ape-2253-reference.png` and should feel like a calm radio-dispatch identity for urgent work, not a meme skin.
 
 Use the brand to reinforce:
 
@@ -15,7 +15,13 @@ Use the brand to reinforce:
 
 ## Current Treatment
 
-The repository does not contain verified BAYC #2253 artwork or trait metadata. For that reason, the app uses:
+The repository includes an owner-supplied Ape 2253 reference image:
+
+- Asset: `public/brand/ape-2253-reference.png`.
+- Source: image supplied by the project owner in the Telegram project thread on 2026-08-11.
+- Usage: app sidebar mascot, guided-mode identity card, README/docs brand reference.
+
+The app also uses:
 
 - Text mark: `Ape 2253 / Rescue Coordinator`.
 - Spanish-facing label: `Ape 2253 / Coordinador de rescate`.
@@ -23,18 +29,18 @@ The repository does not contain verified BAYC #2253 artwork or trait metadata. F
 - Radio/dispatch iconography.
 - Green operational accents alongside the existing dark Lulo Studios visual system.
 
-Do not claim visual traits of BAYC #2253 unless they are verified from rights-cleared local assets or authoritative token metadata added by the project owner.
+Visible reference traits may be described directly from the supplied image only: gray ape, navy coordinator cap, shaded eyes/glasses, skeleton shirt, muted purple background, and cigarette. For crisis-response contexts, avoid emphasizing the cigarette in copy or generated derivative assets.
 
 ## Rights Guardrail
 
-Official Bored Ape Yacht Club #2253 artwork should only be added when the project owner controls or has rights to that token artwork.
+Use the supplied asset only under project-owner authorization.
 
-Until then:
+Guardrails:
 
 - Do not hotlink token images from marketplaces, gateways, or CDNs.
-- Do not copy a token image into the repo without rights confirmation.
-- Do not describe unverified fur, clothing, background, mouth, eye, or accessory traits.
-- Keep the mascot abstract and operational.
+- Do not add additional token images without rights confirmation.
+- Do not imply the app is officially affiliated with Yuga Labs or BAYC.
+- Keep the mascot operational and respectful for emergency-response use.
 
 ## Visual Rules
 
@@ -44,6 +50,7 @@ Until then:
 - Keep the UI Spanish-first.
 - Keep emergency actions visually dominant.
 - Avoid jokes, hype language, speculation, or trading/collection language.
+- In derivative rescue art, the cap/radio/dispatch identity can be emphasized; the cigarette should not be emphasized.
 
 ## Copy Examples
 
@@ -51,20 +58,20 @@ Approved:
 
 - `Ape 2253 / Rescue Coordinator`
 - `Ape 2253 / Coordinador de rescate`
-- `Marca operativa para triage, radio y despacho.`
-- `Lista para reemplazar por arte verificado del token.`
+- `El coordinador de rescate visual de esta mesa.`
+- `Basado en la referencia Ape 2253 suministrada por el proyecto.`
 
 Avoid:
 
-- Claims about exact BAYC #2253 traits without verification.
+- Claims about BAYC #2253 traits beyond the supplied reference image.
 - Any text implying the app is officially affiliated with Yuga Labs or BAYC.
 - Any language that makes the disaster-response interface feel promotional.
 
 ## Future Artwork Checklist
 
-Before adding official token artwork:
+Before adding more token artwork:
 
-1. Confirm owner authorization for BAYC #2253 artwork use.
+1. Confirm owner authorization for the artwork use.
 2. Add the asset locally under a clear `src/assets/` or `public/` path.
 3. Document provenance and usage rights in this file.
 4. Keep alt text operational and concise.

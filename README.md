@@ -125,9 +125,9 @@ Operational guidance:
 
 ## BAYC #2253 Brand Treatment
 
-The project now includes a restrained **Ape 2253 / Rescue Coordinator** identity layer: radio, triage, dispatch, and rescue-coordination language.
+The project now includes a restrained **Ape 2253 / Rescue Coordinator** identity layer based on the owner-supplied reference image in `public/brand/ape-2253-reference.png`: the gray ape in a navy coordinator cap becomes the visual lead for radio, triage, dispatch, and rescue-coordination language.
 
-Important rights note: this repository does **not** include verified BAYC #2253 token artwork or trait metadata. The app therefore uses a tasteful operations-themed badge/card with token id `#2253`, not a hotlinked image or trait claim. Any future use of official Bored Ape Yacht Club #2253 artwork should only happen if the project owner controls or has rights to that token artwork.
+Rights note: the image was supplied by the project owner in the Telegram project thread. Do not add additional BAYC artwork, marketplace hotlinks, or affiliation claims without explicit rights/provenance.
 
 See [docs/BRAND.md](docs/BRAND.md) for usage guidance.
 

@@ -79,6 +79,7 @@ docs/
   GUIDED_RESPONSE_PRD.md  Guided response mode requirements
   BRAND.md               BAYC #2253 rescue-coordinator treatment
   CONTRIBUTING.md        Collaboration and review guide
+  ROADMAP.md             Contributor-facing roadmap and milestone plan
 ```
 
 The app is intentionally local-first:
@@ -144,12 +145,15 @@ Good first areas:
 
 ## Roadmap
 
-- Import JSON package from another device.
-- Printable SITREP and shelter manifest views.
-- Offline/PWA install support.
-- Optional QR handoff for opening the guided mode on a phone.
-- More granular audit log for verification and assignment changes.
-- Partner-ready data dictionary for interoperating with municipal systems.
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the full contributor-facing roadmap.
+
+Near-term priorities:
+
+- Harden the local-first demo with clearer limits, broader tests, and import validation docs.
+- Define the data dictionary and privacy classification for cases, teams, resources, shelters, people check-ins, assignments, and requests.
+- Plan the backend/sync/auth architecture before building multi-user workflows.
+- Add offline/PWA/QR handoff support only with honest local-storage and sync-state messaging.
+- Prepare partner-ready import/export, maps/geocoding, shelter/logistics, QA/accessibility, localization, deployment, and open-source collaboration tracks.
 
 ## References
 

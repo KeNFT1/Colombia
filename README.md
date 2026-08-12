@@ -125,7 +125,7 @@ Operational guidance:
 
 ## BAYC #2253 Brand Treatment
 
-The project now includes a restrained **Ape 2253 / Rescue Coordinator** identity layer based on the owner-supplied reference image in `public/brand/ape-2253-reference.png`: the gray ape in a navy coordinator cap becomes the visual lead for radio, triage, dispatch, and rescue-coordination language.
+The project now includes a restrained **Ape 2253 / Rescue Coordinator** identity layer based on the owner-supplied reference image in `public/brand/ape-2253-reference.png`, with a web-safe app wrapper at `public/brand/ape-2253-reference.svg`: the gray ape in a navy coordinator cap becomes the visual lead for radio, triage, dispatch, and rescue-coordination language.
 
 Rights note: the image was supplied by the project owner in the Telegram project thread. Do not add additional BAYC artwork, marketplace hotlinks, or affiliation claims without explicit rights/provenance.
 

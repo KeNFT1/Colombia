@@ -2,7 +2,7 @@
 
 ## Positioning
 
-**Ape 2253 / Rescue Coordinator** is the mascot layer for Colombia Relief Router. It is based on the owner-supplied Ape 2253 reference image in `public/brand/ape-2253-reference.png` and should feel like a calm radio-dispatch identity for urgent work, not a meme skin.
+**Ape 2253 / Rescue Coordinator** is the mascot layer for Colombia Relief Router. It is based on the owner-supplied Ape 2253 reference image in `public/brand/ape-2253-reference.png` and the web-safe runtime wrapper in `public/brand/ape-2253-reference.svg`. It should feel like a calm radio-dispatch identity for urgent work, not a meme skin.
 
 Use the brand to reinforce:
 
@@ -18,6 +18,7 @@ Use the brand to reinforce:
 The repository includes an owner-supplied Ape 2253 reference image:
 
 - Asset: `public/brand/ape-2253-reference.png`.
+- Runtime asset: `public/brand/ape-2253-reference.svg`, an SVG wrapper that embeds the PNG as base64 so the hosted app can render it reliably.
 - Source: image supplied by the project owner in the Telegram project thread on 2026-08-11.
 - Usage: app sidebar mascot, guided-mode identity card, README/docs brand reference.
 

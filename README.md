@@ -14,7 +14,15 @@ npm run build
 
 ## Qué hace
 
-- Landing en español que explica el flujo: registrar, verificar, asignar y compartir.
+- Inicio guiado en español con tres acciones grandes: reportar ayuda necesaria, ofrecer recursos/ayuda y coordinar casos.
+- En móvil, la pantalla inicial oculta navegación/exportación para que las tres acciones de emergencia aparezcan primero.
+- Selector de rol para ciudadano/enlace comunitario, voluntario, coordinador, albergue y logística, guardado localmente.
+- Flujo de reporte una pregunta a la vez: necesidad, ubicación, personas afectadas, urgencia, contacto y revisión.
+- Flujo guiado para ofrecer ayuda: registra insumos/cupos como `Recurso` o equipos/personas como `Voluntario` en el mismo localStorage.
+- Plantillas rápidas para agua, salud/heridos, familias sin albergue, vía bloqueada y persona no localizada.
+- Vista de coordinación con lenguaje claro y feed completo ordenado por crítico, nuevo, verificado/sin asignar, asignado, bloqueado y reciente.
+- Asignación sugerida con confirmación explícita; los casos nuevos deben verificarse antes de confirmar asignación.
+- Botón grande para crear un reporte SITREP copiable con variantes WhatsApp, radio y email.
 - Resumen operativo con casos abiertos, críticos, asignados y cerrados.
 - Registro de reportes con campos seguros y placeholders para fuentes locales.
 - Cola de casos con filtros de acción: todos, críticos, sin verificar, sin asignar y por necesidad.

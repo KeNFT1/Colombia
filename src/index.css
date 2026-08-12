@@ -13,3 +13,10 @@ body {
   min-width: 320px;
   background: #0a0a0f;
 }
+
+button,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}

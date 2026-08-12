@@ -1,23 +1,31 @@
 import {
   Activity,
   Archive,
+  ArrowLeft,
+  ArrowRight,
   Bell,
   CheckCircle2,
   ClipboardCheck,
+  ClipboardList,
+  Copy,
   Download,
   FileDown,
+  HandHeart,
   HeartPulse,
   Home,
   Languages,
   ListChecks,
   MapPinned,
+  Megaphone,
   PackageCheck,
   Radio,
   Route,
   Search,
+  Send,
   ShieldCheck,
   Sparkles,
   Truck,
+  UserRound,
   Users,
   Warehouse,
 } from 'lucide-react'
@@ -30,6 +38,17 @@ type Prioridad = 'critica' | 'alta' | 'media' | 'baja'
 type Necesidad = 'medica' | 'albergue' | 'agua' | 'alimentos' | 'escombros' | 'transporte' | 'comunicaciones' | 'familia'
 type Vista = 'inicio' | 'operaciones' | 'ingreso' | 'recursos' | 'voluntarios' | 'albergues' | 'personas'
 type Filtro = 'todas' | 'criticas' | 'sin-verificar' | 'sin-asignar' | 'bloqueadas' | 'riesgo-albergue' | 'brechas' | Necesidad
+type RolUsuario = 'ciudadano' | 'voluntario' | 'coordinador' | 'albergue' | 'logistica'
+type FlujoGuiado = 'inicio' | 'necesidad' | 'recursos' | 'coordinar' | 'sitrep'
+type PasoNecesidad = 'necesidad' | 'ubicacion' | 'personas' | 'urgencia' | 'contacto' | 'revision'
+type PasoOferta = 'oferta' | 'ubicacion' | 'cantidad' | 'disponibilidad' | 'contacto' | 'revision'
+type TipoOferta = 'recurso' | 'voluntario'
+type SugerenciaAsignacion = {
+  casoId: string
+  equipoId: string
+  eta: string
+}
+type SitrepFormato = 'whatsapp' | 'radio' | 'email'
 
 type Caso = {
   id: string
@@ -128,6 +147,57 @@ const necesidadLabel: Record<Necesidad, string> = {
 }
 const prioridadLabel: Record<Prioridad, string> = { critica: 'Crítica', alta: 'Alta', media: 'Media', baja: 'Baja' }
 const estadoLabel: Record<Estado, string> = { nuevo: 'Nuevo', verificado: 'Verificado', asignado: 'Asignado', resuelto: 'Cerrado' }
+const estadoAccionLabel: Record<Estado, string> = {
+  nuevo: 'Necesita verificación',
+  verificado: 'Listo para asignar',
+  asignado: 'Alguien ya está yendo',
+  resuelto: 'Cerrado',
+}
+const rolLabel: Record<RolUsuario, string> = {
+  ciudadano: 'Ciudadano / enlace comunitario',
+  voluntario: 'Voluntario',
+  coordinador: 'Coordinador',
+  albergue: 'Albergue',
+  logistica: 'Logística',
+}
+const rolAyuda: Record<RolUsuario, string> = {
+  ciudadano: 'Reporta una necesidad o confirma información local.',
+  voluntario: 'Ve dónde puedes ayudar y qué equipo encaja mejor.',
+  coordinador: 'Prioriza casos, verifica y asigna equipos.',
+  albergue: 'Revisa familias sin techo, cupos y necesidades básicas.',
+  logistica: 'Conecta recursos, rutas, ETA y brechas de insumos.',
+}
+const plantillaNecesidades: {
+  label: string
+  necesidad: Necesidad
+  prioridad: Prioridad
+  notas: string
+}[] = [
+  { label: 'Necesitamos agua', necesidad: 'agua', prioridad: 'alta', notas: 'Necesitamos agua potable para familias afectadas. Falta punto de distribución confirmado.' },
+  { label: 'Heridos / salud', necesidad: 'medica', prioridad: 'critica', notas: 'Hay personas heridas o con necesidad de atención en salud. Se requiere verificación y apoyo médico.' },
+  { label: 'Familias sin albergue', necesidad: 'albergue', prioridad: 'alta', notas: 'Familias no pueden volver a sus viviendas y necesitan albergue temporal seguro.' },
+  { label: 'Vía bloqueada', necesidad: 'escombros', prioridad: 'alta', notas: 'Hay una vía bloqueada o acceso interrumpido. Se necesita verificación y equipo de remoción.' },
+  { label: 'Persona no localizada', necesidad: 'familia', prioridad: 'alta', notas: 'Se reporta una persona o grupo no localizado. Registrar solo datos mínimos y fuente operativa.' },
+]
+const pasosNecesidad: PasoNecesidad[] = ['necesidad', 'ubicacion', 'personas', 'urgencia', 'contacto', 'revision']
+const pasosOferta: PasoOferta[] = ['oferta', 'ubicacion', 'cantidad', 'disponibilidad', 'contacto', 'revision']
+
+const plantillaOfertas: {
+  label: string
+  modo: TipoOferta
+  necesidad: Necesidad
+  nombre: string
+  cantidad: string
+}[] = [
+  { label: 'Vehículo', modo: 'voluntario', necesidad: 'transporte', nombre: 'Equipo de transporte', cantidad: '1 vehículo' },
+  { label: 'Agua', modo: 'recurso', necesidad: 'agua', nombre: 'Agua potable', cantidad: 'litros por confirmar' },
+  { label: 'Alimentos', modo: 'recurso', necesidad: 'alimentos', nombre: 'Kits de alimentos', cantidad: 'cantidad por confirmar' },
+  { label: 'Medicamentos/equipo', modo: 'recurso', necesidad: 'medica', nombre: 'Insumos médicos', cantidad: 'cantidad por confirmar' },
+  { label: 'Cupos de albergue', modo: 'recurso', necesidad: 'albergue', nombre: 'Cupos de albergue', cantidad: 'cupos por confirmar' },
+  { label: 'Radio/comunicaciones', modo: 'voluntario', necesidad: 'comunicaciones', nombre: 'Equipo comunicaciones', cantidad: 'equipo disponible' },
+  { label: 'Manos voluntarias', modo: 'voluntario', necesidad: 'alimentos', nombre: 'Voluntarios disponibles', cantidad: 'personas por confirmar' },
+  { label: 'Maquinaria', modo: 'voluntario', necesidad: 'escombros', nombre: 'Equipo maquinaria/remoción', cantidad: 'maquinaria por confirmar' },
+]
 
 const casosBase: Caso[] = [
   {
@@ -262,6 +332,7 @@ const claves = {
   personas: 'colombia-relief-router-people',
   asignaciones: 'colombia-relief-router-assignments',
   solicitudes: 'colombia-relief-router-requests',
+  rol: 'colombia-relief-router-role',
 }
 
 const horaCorta = () => new Date().toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
@@ -270,8 +341,83 @@ function siguienteId(prefijo: string, existentes: { id: string }[]) {
   return `${prefijo}-${String(existentes.length + 1).padStart(3, '0')}`
 }
 
+function leerRol() {
+  const rol = localStorage.getItem(claves.rol)
+  return rol && rol in rolLabel ? rol as RolUsuario : 'ciudadano'
+}
+
+function crearTextoSitrep(casos: Caso[], asignaciones: Asignacion[], solicitudes: Solicitud[]) {
+  const abiertos = casos.filter((caso) => caso.estado !== 'resuelto')
+  const criticos = abiertos.filter((caso) => caso.prioridad === 'critica')
+  const sinVerificar = abiertos.filter((caso) => caso.estado === 'nuevo')
+  const listos = abiertos.filter((caso) => caso.estado === 'verificado')
+  const enCamino = asignaciones.filter((item) => item.estado === 'aceptado' || item.estado === 'en ruta' || item.estado === 'en sitio')
+  const bloqueados = asignaciones.filter((item) => item.estado === 'bloqueado')
+  const necesidadesClave = necesidades
+    .map((necesidad) => ({ necesidad, total: abiertos.filter((caso) => caso.necesidad === necesidad).length }))
+    .filter((item) => item.total > 0)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 4)
+    .map((item) => `${necesidadLabel[item.necesidad]} ${item.total}`)
+    .join(', ') || 'sin necesidades abiertas'
+  const municipios = [...new Set(abiertos.map((caso) => caso.municipio).filter(Boolean))].slice(0, 5).join(', ') || 'sin municipios abiertos'
+  const solicitudesAbiertas = solicitudes.filter((item) => item.estado !== 'cubierta')
+
+  return [
+    `SITREP Colombia ${horaCorta()}`,
+    `Casos abiertos: ${abiertos.length}. Críticos: ${criticos.length}. Necesitan verificación: ${sinVerificar.length}. Listos para asignar: ${listos.length}.`,
+    `Alguien ya está yendo: ${enCamino.length}. Bloqueados: ${bloqueados.length}. Solicitudes abiertas: ${solicitudesAbiertas.length}.`,
+    `Municipios: ${municipios}. Necesidades principales: ${necesidadesClave}.`,
+    'Compartir solo por canales autorizados. No incluir cédulas, datos médicos ni direcciones privadas completas.',
+  ].join('\n')
+}
+
+function ordenarFeedCrisis(casos: Caso[], asignaciones: Asignacion[]) {
+  return [...casos]
+    .filter((caso) => caso.estado !== 'resuelto')
+    .sort((a, b) => {
+      const bloqueadoA = asignaciones.some((item) => item.casoId === a.id && item.estado === 'bloqueado')
+      const bloqueadoB = asignaciones.some((item) => item.casoId === b.id && item.estado === 'bloqueado')
+      const asignadoA = a.estado === 'asignado' || asignaciones.some((item) => item.casoId === a.id)
+      const asignadoB = b.estado === 'asignado' || asignaciones.some((item) => item.casoId === b.id)
+      const grupo = (caso: Caso, bloqueado: boolean, asignado: boolean) => {
+        if (caso.prioridad === 'critica') return 0
+        if (caso.estado === 'nuevo') return 1
+        if (caso.estado === 'verificado') return asignado ? 4 : 2
+        if (!asignado) return 3
+        if (bloqueado) return 5
+        return 6
+      }
+      const grupoA = grupo(a, bloqueadoA, asignadoA)
+      const grupoB = grupo(b, bloqueadoB, asignadoB)
+      if (grupoA !== grupoB) return grupoA - grupoB
+      const peso = prioridadPeso[b.prioridad] - prioridadPeso[a.prioridad]
+      if (peso !== 0) return peso
+      return b.actualizado.localeCompare(a.actualizado)
+    })
+}
+
+function crearSitrepFormato(texto: string, formato: SitrepFormato) {
+  if (formato === 'radio') {
+    return texto
+      .split('\n')
+      .map((linea, indice) => `${indice + 1}. ${linea.replace('SITREP Colombia', 'SITREP COLOMBIA')}`)
+      .join('\n')
+  }
+  if (formato === 'email') {
+    return `Asunto: SITREP Colombia - ${horaCorta()}\n\n${texto}\n\nRecordatorio: revisar datos sensibles antes de reenviar.`
+  }
+  return texto
+}
+
 function App() {
   const [vista, setVista] = useState<Vista>('inicio')
+  const [flujoGuiado, setFlujoGuiado] = useState<FlujoGuiado>('inicio')
+  const [rolUsuario, setRolUsuario] = useState<RolUsuario>(() => leerRol())
+  const [pasoNecesidad, setPasoNecesidad] = useState<PasoNecesidad>('necesidad')
+  const [pasoOferta, setPasoOferta] = useState<PasoOferta>('oferta')
+  const [reporteCopiado, setReporteCopiado] = useState(false)
+  const [formatoSitrep, setFormatoSitrep] = useState<SitrepFormato>('whatsapp')
   const [filtro, setFiltro] = useState<Filtro>('todas')
   const [busqueda, setBusqueda] = useState('')
   const [casos, setCasos] = useState<Caso[]>(() => leerColeccion(claves.casos, casosBase))
@@ -343,6 +489,27 @@ function App() {
     punto: '',
     estado: 'abierta' as Solicitud['estado'],
   })
+  const [guiaNecesidad, setGuiaNecesidad] = useState({
+    municipio: '',
+    departamento: '',
+    necesidad: 'agua' as Necesidad,
+    prioridad: 'alta' as Prioridad,
+    personas: 1,
+    contacto: '',
+    coordenadas: '',
+    notas: '',
+  })
+  const [guiaOferta, setGuiaOferta] = useState({
+    modo: 'recurso' as TipoOferta,
+    nombre: '',
+    necesidad: 'agua' as Necesidad,
+    ubicacion: '',
+    cantidad: '',
+    disponibilidad: 'Ahora',
+    contacto: '',
+  })
+  const [sugerenciaAsignacion, setSugerenciaAsignacion] = useState<SugerenciaAsignacion | null>(null)
+  const [mensajeSugerencia, setMensajeSugerencia] = useState('')
 
   const abiertos = casos.filter((caso) => caso.estado !== 'resuelto')
   const asignacionesBloqueadas = asignaciones.filter((item) => item.estado === 'bloqueado')
@@ -372,7 +539,8 @@ function App() {
   })
   const brechasActivas = brechas.filter((item) => item.brecha > 0)
 
-  const casoMasUrgente = filtrados.find((caso) => caso.estado !== 'resuelto')
+  const feedCrisis = useMemo(() => ordenarFeedCrisis(casos, asignaciones), [asignaciones, casos])
+  const casoMasUrgente = feedCrisis[0] ?? filtrados.find((caso) => caso.estado !== 'resuelto')
   const casoActivo = casoSeleccionado ?? casoMasUrgente ?? abiertos[0] ?? null
   const equiposSugeridos = casoActivo
     ? voluntarios
@@ -394,6 +562,7 @@ function App() {
     albergue: alberguesEnRiesgo.length,
     brechas: brechasActivas.length + solicitudesAbiertas.length,
   }
+  const textoSitrep = crearSitrepFormato(crearTextoSitrep(casos, asignaciones, solicitudes), formatoSitrep)
 
   function agregarCaso(evento: FormEvent) {
     evento.preventDefault()
@@ -410,6 +579,126 @@ function App() {
     setCasoSeleccionadoId(nuevo.id)
     setFormulario({ ...formulario, municipio: '', departamento: '', personas: 1, contacto: '', coordenadas: '', notas: '' })
     setVista('operaciones')
+  }
+
+  function cambiarRol(rol: RolUsuario) {
+    setRolUsuario(rol)
+    localStorage.setItem(claves.rol, rol)
+  }
+
+  function iniciarFlujo(flujo: FlujoGuiado) {
+    setFlujoGuiado(flujo)
+    setVista('inicio')
+    if (flujo === 'necesidad') {
+      setPasoNecesidad('necesidad')
+    }
+    if (flujo === 'recursos') {
+      setPasoOferta('oferta')
+    }
+    if (flujo === 'coordinar') {
+      setFiltro('todas')
+    }
+  }
+
+  function guardarNecesidadGuiada() {
+    const nuevo: Caso = {
+      id: `COL-${String(casos.length + 1).padStart(3, '0')}`,
+      ...guiaNecesidad,
+      municipio: guiaNecesidad.municipio.trim(),
+      departamento: guiaNecesidad.departamento.trim() || 'Por confirmar',
+      personas: Number(guiaNecesidad.personas) || 1,
+      contacto: guiaNecesidad.contacto.trim() || 'Fuente por confirmar',
+      notas: guiaNecesidad.notas.trim(),
+      estado: 'nuevo',
+      actualizado: horaCorta(),
+    }
+    const actualizados = [nuevo, ...casos]
+    setCasos(actualizados)
+    guardarColeccion(claves.casos, actualizados)
+    seleccionarCaso(nuevo)
+    setGuiaNecesidad({ municipio: '', departamento: '', necesidad: 'agua', prioridad: 'alta', personas: 1, contacto: '', coordenadas: '', notas: '' })
+    setPasoNecesidad('necesidad')
+    setFlujoGuiado('coordinar')
+    setFiltro('todas')
+  }
+
+  function crearAsignacionSugerida(caso: Caso) {
+    const equipo = voluntarios.find((item) => item.habilidades.includes(caso.necesidad) && item.estado === 'disponible') ?? voluntarios.find((item) => item.habilidades.includes(caso.necesidad))
+    if (!equipo) {
+      setSugerenciaAsignacion(null)
+      setMensajeSugerencia('No hay equipo compatible; crea solicitud o registra voluntario.')
+      setCasoSeleccionadoId(caso.id)
+      return
+    }
+    setSugerenciaAsignacion({
+      casoId: caso.id,
+      equipoId: equipo.id,
+      eta: caso.prioridad === 'critica' ? '20 min' : caso.prioridad === 'alta' ? '35 min' : '60 min',
+    })
+    setMensajeSugerencia('')
+    setCasoSeleccionadoId(caso.id)
+  }
+
+  function confirmarAsignacionSugerida() {
+    if (!sugerenciaAsignacion) return
+    const caso = casos.find((item) => item.id === sugerenciaAsignacion.casoId)
+    const equipo = voluntarios.find((item) => item.id === sugerenciaAsignacion.equipoId)
+    if (!caso || !equipo) return
+    if (caso.estado !== 'verificado') {
+      setMensajeSugerencia('Verifica el caso antes de asignar. Esta acción no cambia estados sin confirmación.')
+      return
+    }
+    const nueva: Asignacion = {
+      id: siguienteId('ASG', asignaciones),
+      casoId: sugerenciaAsignacion.casoId,
+      equipo: equipo.nombre,
+      estado: 'aceptado',
+      eta: sugerenciaAsignacion.eta,
+      responsable: equipo.contacto || equipo.nombre,
+    }
+    const asignacionesActualizadas = [nueva, ...asignaciones]
+    setAsignaciones(asignacionesActualizadas)
+    guardarColeccion(claves.asignaciones, asignacionesActualizadas)
+    guardarCasos(casos.map((item) => item.id === caso.id ? { ...item, estado: 'asignado', responsable: equipo.nombre, actualizado: horaCorta() } : item))
+    setCasoSeleccionadoId(caso.id)
+    setSugerenciaAsignacion(null)
+    setMensajeSugerencia('')
+  }
+
+  function guardarOfertaGuiada() {
+    if (guiaOferta.modo === 'voluntario') {
+      const nuevo: Voluntario = {
+        id: siguienteId('EQ', voluntarios),
+        nombre: guiaOferta.nombre.trim() || `Equipo ${necesidadLabel[guiaOferta.necesidad]}`,
+        base: guiaOferta.ubicacion.trim() || 'Ubicación por confirmar',
+        rol: 'voluntario',
+        habilidades: [guiaOferta.necesidad],
+        disponibilidad: guiaOferta.cantidad.trim() || guiaOferta.disponibilidad.trim() || 'Disponible',
+        turno: guiaOferta.disponibilidad.trim() || 'Ahora',
+        estado: 'disponible',
+        contacto: guiaOferta.contacto.trim() || 'Contacto por confirmar',
+      }
+      const actualizados = [nuevo, ...voluntarios]
+      setVoluntarios(actualizados)
+      guardarColeccion(claves.voluntarios, actualizados)
+    } else {
+      const nuevo: Recurso = {
+        id: siguienteId('INV', recursos),
+        nombre: guiaOferta.nombre.trim() || necesidadLabel[guiaOferta.necesidad],
+        tipo: guiaOferta.necesidad,
+        ubicacion: guiaOferta.ubicacion.trim() || 'Ubicación por confirmar',
+        cantidad: guiaOferta.cantidad.trim() || 'Cantidad por confirmar',
+        estado: 'disponible',
+        responsable: guiaOferta.contacto.trim() || 'Responsable por confirmar',
+      }
+      const actualizados = [nuevo, ...recursos]
+      setRecursos(actualizados)
+      guardarColeccion(claves.recursos, actualizados)
+    }
+    setGuiaOferta({ modo: 'recurso', nombre: '', necesidad: 'agua', ubicacion: '', cantidad: '', disponibilidad: 'Ahora', contacto: '' })
+    setPasoOferta('oferta')
+    setFlujoGuiado('coordinar')
+    setFiltro('todas')
   }
 
   function cambiarEstado(id: string, estado: Estado) {
@@ -607,7 +896,7 @@ function App() {
   }
 
   return (
-    <main className="app">
+    <main className={`app vista-${vista}`}>
       <aside className="sidebar">
         <div className="brand-mark">
           <span>RC</span>
@@ -656,33 +945,39 @@ function App() {
         </header>
 
         {vista === 'inicio' && (
-          <section className="landing">
-            <div className="landing-copy">
-              <p className="eyebrow"><Sparkles size={16} /> Diseñado para claridad en crisis</p>
-              <h2>De reporte suelto a acción coordinada en cuatro pasos.</h2>
-              <p>
-                La herramienta organiza información de campo sin depender de cuentas externas: registra, verifica, asigna
-                y exporta. Está pensada para coordinadores, voluntarios y enlaces locales que necesitan decidir rápido sin
-                exponer datos sensibles.
-              </p>
-              <div className="trust-strip">Datos guardados en este dispositivo · No publicar datos sensibles · Exportable CSV/JSON</div>
-              <div className="step-row">
-                <Step n="1" title="Registrar" text="Captura municipio, prioridad, necesidad, personas afectadas y contacto." />
-                <Step n="2" title="Verificar" text="Filtra reportes, confirma origen y mueve el caso a verificado." />
-                <Step n="3" title="Asignar" text="Cruza brechas con voluntarios, recursos, albergues y transporte." />
-                <Step n="4" title="Compartir" text="Exporta CSV o JSON para hojas de cálculo, agencias o radio-operadores." />
-              </div>
-              <button className="primary wide" onClick={() => setVista('operaciones')}>Abrir consola operativa</button>
-            </div>
-            <div className="system-card">
-              <div className="signal-line"><span /> Prioridad actual</div>
-              <strong>{casoMasUrgente?.municipio ?? 'Sin casos abiertos'}</strong>
-              <p>{casoMasUrgente?.notas ?? 'Cuando ingrese un caso, aparecerá aquí.'}</p>
-              <div className="mini-map">
-                {casos.slice(0, 5).map((caso, index) => <i key={caso.id} style={{ left: `${18 + index * 15}%`, top: `${30 + (index % 3) * 17}%` }} />)}
-              </div>
-            </div>
-          </section>
+          <InicioGuiado
+            flujo={flujoGuiado}
+            setFlujo={iniciarFlujo}
+            rol={rolUsuario}
+            setRol={cambiarRol}
+            guia={guiaNecesidad}
+            setGuia={setGuiaNecesidad}
+            paso={pasoNecesidad}
+            setPaso={setPasoNecesidad}
+            guardarNecesidad={guardarNecesidadGuiada}
+            oferta={guiaOferta}
+            setOferta={setGuiaOferta}
+            pasoOferta={pasoOferta}
+            setPasoOferta={setPasoOferta}
+            guardarOferta={guardarOfertaGuiada}
+            casos={casos}
+            casosFiltrados={feedCrisis}
+            casoUrgente={casoMasUrgente}
+            seleccionarCaso={seleccionarCaso}
+            cambiarEstado={cambiarEstado}
+            crearAsignacionSugerida={crearAsignacionSugerida}
+            confirmarAsignacionSugerida={confirmarAsignacionSugerida}
+            sugerenciaAsignacion={sugerenciaAsignacion}
+            mensajeSugerencia={mensajeSugerencia}
+            voluntarios={voluntarios}
+            asignaciones={asignaciones}
+            textoSitrep={textoSitrep}
+            formatoSitrep={formatoSitrep}
+            setFormatoSitrep={setFormatoSitrep}
+            reporteCopiado={reporteCopiado}
+            setReporteCopiado={setReporteCopiado}
+            abrirConsola={() => setVista('operaciones')}
+          />
         )}
 
         {vista === 'operaciones' && (
@@ -724,6 +1019,11 @@ function App() {
                 recursos={recursosSugeridos}
                 albergues={alberguesSugeridos}
                 onEstado={cambiarEstado}
+                onAsignacionSugerida={crearAsignacionSugerida}
+                onConfirmarAsignacion={confirmarAsignacionSugerida}
+                sugerenciaAsignacion={sugerenciaAsignacion}
+                mensajeSugerencia={mensajeSugerencia}
+                voluntarios={voluntarios}
                 onAsignar={(caso) => {
                   seleccionarCaso(caso)
                   setNuevaAsignacion((actual) => ({ ...actual, casoId: caso.id }))
@@ -746,7 +1046,7 @@ function App() {
                 agregarSolicitud={agregarSolicitud}
                 actualizarSolicitud={actualizarSolicitud}
               />
-              <Sitrep casos={casos} />
+              <Sitrep texto={textoSitrep} />
             </section>
           </>
         )}
@@ -758,6 +1058,461 @@ function App() {
         {vista === 'personas' && <Personas personas={personas} formulario={nuevaPersona} setFormulario={setNuevaPersona} agregarPersona={agregarPersona} actualizarPersona={actualizarPersona} privacidadOk={privacidadPersonaOk} setPrivacidadOk={setPrivacidadPersonaOk} />}
       </section>
     </main>
+  )
+}
+
+function InicioGuiado({ flujo, setFlujo, rol, setRol, guia, setGuia, paso, setPaso, guardarNecesidad, oferta, setOferta, pasoOferta, setPasoOferta, guardarOferta, casos, casosFiltrados, casoUrgente, seleccionarCaso, cambiarEstado, crearAsignacionSugerida, confirmarAsignacionSugerida, sugerenciaAsignacion, mensajeSugerencia, voluntarios, asignaciones, textoSitrep, formatoSitrep, setFormatoSitrep, reporteCopiado, setReporteCopiado, abrirConsola }: {
+  flujo: FlujoGuiado
+  setFlujo: (flujo: FlujoGuiado) => void
+  rol: RolUsuario
+  setRol: (rol: RolUsuario) => void
+  guia: {
+    municipio: string
+    departamento: string
+    necesidad: Necesidad
+    prioridad: Prioridad
+    personas: number
+    contacto: string
+    coordenadas: string
+    notas: string
+  }
+  setGuia: (valor: typeof guia) => void
+  paso: PasoNecesidad
+  setPaso: (paso: PasoNecesidad) => void
+  guardarNecesidad: () => void
+  oferta: {
+    modo: TipoOferta
+    nombre: string
+    necesidad: Necesidad
+    ubicacion: string
+    cantidad: string
+    disponibilidad: string
+    contacto: string
+  }
+  setOferta: (valor: typeof oferta) => void
+  pasoOferta: PasoOferta
+  setPasoOferta: (paso: PasoOferta) => void
+  guardarOferta: () => void
+  casos: Caso[]
+  casosFiltrados: Caso[]
+  casoUrgente: Caso | undefined
+  seleccionarCaso: (caso: Caso) => void
+  cambiarEstado: (id: string, estado: Estado) => void
+  crearAsignacionSugerida: (caso: Caso) => void
+  confirmarAsignacionSugerida: () => void
+  sugerenciaAsignacion: SugerenciaAsignacion | null
+  mensajeSugerencia: string
+  voluntarios: Voluntario[]
+  asignaciones: Asignacion[]
+  textoSitrep: string
+  formatoSitrep: SitrepFormato
+  setFormatoSitrep: (formato: SitrepFormato) => void
+  reporteCopiado: boolean
+  setReporteCopiado: (valor: boolean) => void
+  abrirConsola: () => void
+}) {
+  const casosAccion = casos
+    .filter((caso) => caso.estado !== 'resuelto')
+    .sort((a, b) => (prioridadPeso[b.prioridad] + prioridadAccion[b.estado]) - (prioridadPeso[a.prioridad] + prioridadAccion[a.estado]))
+  const bloqueados = asignaciones.filter((item) => item.estado === 'bloqueado')
+
+  return (
+    <section className="guided-shell">
+      <div className="guided-hero">
+        <div>
+          <p className="eyebrow"><UserRound size={16} /> Modo guiado</p>
+          <h2>¿Qué necesitas hacer ahora?</h2>
+        </div>
+        <div className="guided-actions">
+          <button className={flujo === 'necesidad' ? 'big-action active' : 'big-action'} onClick={() => setFlujo('necesidad')}>
+            <Megaphone size={34} />
+            <span>Reportar ayuda necesaria</span>
+            <small>Agua, salud, albergue, vías o personas no localizadas.</small>
+          </button>
+          <button className={flujo === 'recursos' ? 'big-action active' : 'big-action'} onClick={() => setFlujo('recursos')}>
+            <HandHeart size={34} />
+            <span>Tengo recursos / puedo ayudar</span>
+            <small>Registra equipo, insumos, cupos, transporte o disponibilidad.</small>
+          </button>
+          <button className={flujo === 'coordinar' ? 'big-action active' : 'big-action'} onClick={() => setFlujo('coordinar')}>
+            <ClipboardList size={34} />
+            <span>Coordinar casos</span>
+            <small>Verifica, asigna y prepara reportes para compartir.</small>
+          </button>
+        </div>
+        <div className="role-strip secondary">
+          <p>{rolAyuda[rol]} Responde una cosa a la vez.</p>
+          <label>
+            Tu rol
+            <select value={rol} onChange={(e) => setRol(e.target.value as RolUsuario)}>
+              {Object.entries(rolLabel).map(([valor, label]) => <option key={valor} value={valor}>{label}</option>)}
+            </select>
+          </label>
+        </div>
+        <div className="trust-strip">Funciona sin cuenta. Datos guardados en este dispositivo. Copia JSON/CSV antes de cambiar de teléfono o navegador.</div>
+      </div>
+
+      {flujo === 'inicio' && (
+        <section className="guided-grid">
+          <div className="guided-panel">
+            <h2><Sparkles size={19} /> Prioridad actual</h2>
+            <strong className="large-signal">{casoUrgente?.municipio ?? 'Sin casos abiertos'}</strong>
+            <p className="helper">{casoUrgente?.notas ?? 'Cuando llegue un reporte, aparecerá aquí con la siguiente acción.'}</p>
+            <div className="step-row simple">
+              <Step n="1" title="Reportar" text="Captura ubicación, necesidad y fuente." />
+              <Step n="2" title="Verificar" text="Confirma antes de publicar o asignar." />
+              <Step n="3" title="Asignar" text="Elige equipo compatible con ETA." />
+              <Step n="4" title="Compartir" text="Copia SITREP para WhatsApp, radio o email." />
+            </div>
+          </div>
+          <div className="guided-panel">
+            <h2><ListChecks size={19} /> Estado simple</h2>
+            <div className="plain-status">
+              <MiniRow title="Necesita verificación" body={`${casosAccion.filter((caso) => caso.estado === 'nuevo').length} casos`} status="revisar" />
+              <MiniRow title="Listo para asignar" body={`${casosAccion.filter((caso) => caso.estado === 'verificado').length} casos`} status="despachar" />
+              <MiniRow title="Alguien ya está yendo" body={`${casosAccion.filter((caso) => caso.estado === 'asignado').length} casos`} status="seguimiento" />
+              <MiniRow title="Bloqueado: necesita decisión" body={`${bloqueados.length} asignaciones`} status="decidir" />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {flujo === 'necesidad' && (
+        <GuidedNeedFlow guia={guia} setGuia={setGuia} paso={paso} setPaso={setPaso} guardar={guardarNecesidad} />
+      )}
+
+      {flujo === 'recursos' && (
+        <GuidedOfferFlow oferta={oferta} setOferta={setOferta} paso={pasoOferta} setPaso={setPasoOferta} guardar={guardarOferta} />
+      )}
+
+      {flujo === 'coordinar' && (
+        <GuidedCoordination
+          casos={casosFiltrados.length ? casosFiltrados : casosAccion}
+          asignaciones={asignaciones}
+          seleccionarCaso={seleccionarCaso}
+          cambiarEstado={cambiarEstado}
+          crearAsignacionSugerida={crearAsignacionSugerida}
+          confirmarAsignacionSugerida={confirmarAsignacionSugerida}
+          sugerenciaAsignacion={sugerenciaAsignacion}
+          mensajeSugerencia={mensajeSugerencia}
+          voluntarios={voluntarios}
+          abrirConsola={abrirConsola}
+        />
+      )}
+
+      {flujo === 'sitrep' && (
+        <GuidedSitrep texto={textoSitrep} formato={formatoSitrep} setFormato={setFormatoSitrep} copiado={reporteCopiado} setCopiado={setReporteCopiado} />
+      )}
+
+      <div className="guided-footer-actions">
+        <button onClick={() => setFlujo('sitrep')}><Send size={18} /> Crear reporte para compartir</button>
+        <button className="quiet" onClick={() => navigator.clipboard?.writeText(window.location.href)}><Copy size={18} /> Copiar enlace</button>
+        <button className="quiet" onClick={abrirConsola}><Activity size={18} /> Modo coordinación</button>
+      </div>
+    </section>
+  )
+}
+
+function GuidedNeedFlow({ guia, setGuia, paso, setPaso, guardar }: {
+  guia: {
+    municipio: string
+    departamento: string
+    necesidad: Necesidad
+    prioridad: Prioridad
+    personas: number
+    contacto: string
+    coordenadas: string
+    notas: string
+  }
+  setGuia: (valor: typeof guia) => void
+  paso: PasoNecesidad
+  setPaso: (paso: PasoNecesidad) => void
+  guardar: () => void
+}) {
+  const indice = pasosNecesidad.indexOf(paso)
+  const puedeAvanzar =
+    paso === 'ubicacion' ? Boolean(guia.municipio.trim()) :
+      paso === 'necesidad' ? Boolean(guia.notas.trim()) :
+        paso === 'personas' ? Number(guia.personas) > 0 :
+          paso === 'urgencia' ? Boolean(guia.prioridad) :
+            paso === 'contacto' ? Boolean(guia.contacto.trim()) : true
+  const siguiente = () => setPaso(pasosNecesidad[Math.min(indice + 1, pasosNecesidad.length - 1)])
+  const anterior = () => setPaso(pasosNecesidad[Math.max(indice - 1, 0)])
+
+  return (
+    <section className="guided-panel wizard">
+      <div className="wizard-progress">
+        <span>Paso {indice + 1} de {pasosNecesidad.length}</span>
+        <meter min="0" max={pasosNecesidad.length} value={indice + 1} />
+      </div>
+
+      {paso === 'ubicacion' && (
+        <div className="wizard-step">
+          <h2><MapPinned size={20} /> ¿Dónde se necesita ayuda?</h2>
+          <label>Municipio o barrio<input autoFocus value={guia.municipio} onChange={(e) => setGuia({ ...guia, municipio: e.target.value })} placeholder="Ej. Cali, San José del Palmar, vereda..." /></label>
+          <label>Departamento<input value={guia.departamento} onChange={(e) => setGuia({ ...guia, departamento: e.target.value })} placeholder="Opcional si no está confirmado" /></label>
+          <label>Coordenadas o referencia<input value={guia.coordenadas} onChange={(e) => setGuia({ ...guia, coordenadas: e.target.value })} placeholder="Opcional: punto de encuentro, GPS o referencia segura" /></label>
+        </div>
+      )}
+
+      {paso === 'necesidad' && (
+        <div className="wizard-step">
+          <h2><Megaphone size={20} /> ¿Qué pasó o qué necesitan?</h2>
+          <div className="template-grid">
+            {plantillaNecesidades.map((plantilla) => (
+              <button key={plantilla.label} type="button" onClick={() => {
+                setGuia({ ...guia, necesidad: plantilla.necesidad, prioridad: plantilla.prioridad, notas: plantilla.notas })
+              }}>{plantilla.label}</button>
+            ))}
+          </div>
+          <label>Tipo de necesidad<select value={guia.necesidad} onChange={(e) => setGuia({ ...guia, necesidad: e.target.value as Necesidad })}>{necesidades.map((item) => <option key={item} value={item}>{necesidadLabel[item]}</option>)}</select></label>
+          <label>Descripción corta<textarea rows={4} value={guia.notas} onChange={(e) => setGuia({ ...guia, notas: e.target.value })} placeholder="Qué pasó, qué falta, punto de referencia y fuente del reporte" /></label>
+        </div>
+      )}
+
+      {paso === 'personas' && (
+        <div className="wizard-step">
+          <h2><Users size={20} /> ¿Cuántas personas están afectadas?</h2>
+          <label>Personas afectadas<input type="number" min="1" value={guia.personas} onChange={(e) => setGuia({ ...guia, personas: Number(e.target.value) })} /></label>
+          <p className="helper">Usa un estimado si no hay conteo exacto. Evita nombres completos o datos privados.</p>
+        </div>
+      )}
+
+      {paso === 'urgencia' && (
+        <div className="wizard-step">
+          <h2><HeartPulse size={20} /> ¿Qué tan urgente es?</h2>
+          <div className="urgency-grid">
+            {(['critica', 'alta', 'media', 'baja'] as Prioridad[]).map((prioridad) => (
+              <button key={prioridad} className={guia.prioridad === prioridad ? 'active' : ''} type="button" onClick={() => setGuia({ ...guia, prioridad })}>
+                <strong>{prioridadLabel[prioridad]}</strong>
+                <small>{prioridad === 'critica' ? 'Riesgo de vida ahora' : prioridad === 'alta' ? 'Necesita respuesta pronto' : prioridad === 'media' ? 'Requiere seguimiento' : 'Puede esperar'}</small>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {paso === 'contacto' && (
+        <div className="wizard-step">
+          <h2><Radio size={20} /> ¿Quién reporta o confirma?</h2>
+          <label>Contacto o fuente operativa<input value={guia.contacto} onChange={(e) => setGuia({ ...guia, contacto: e.target.value })} placeholder="Ej. enlace comunitario, radio local, PMU municipal" /></label>
+          <p className="helper">Anota un canal operativo. No incluyas información privada si este reporte se compartirá.</p>
+        </div>
+      )}
+
+      {paso === 'revision' && (
+        <div className="wizard-step review-card">
+          <h2><CheckCircle2 size={20} /> Revisar y guardar</h2>
+          <MiniRow title="Lugar" body={`${guia.municipio || 'Sin municipio'} · ${guia.departamento || 'Departamento por confirmar'}`} status={guia.coordenadas || 'sin GPS'} />
+          <MiniRow title="Necesidad" body={`${necesidadLabel[guia.necesidad]} · ${prioridadLabel[guia.prioridad]}`} status={`${guia.personas} personas`} />
+          <MiniRow title="Fuente" body={guia.contacto || 'Fuente por confirmar'} status="nuevo caso" />
+          <p>{guia.notas}</p>
+        </div>
+      )}
+
+      <div className="wizard-actions">
+        <button type="button" onClick={anterior} disabled={indice === 0}><ArrowLeft size={18} /> Atrás</button>
+        {paso === 'revision'
+          ? <button className="primary" type="button" onClick={guardar} disabled={!guia.municipio.trim() || !guia.notas.trim()}><CheckCircle2 size={18} /> Guardar caso</button>
+          : <button className="primary" type="button" onClick={siguiente} disabled={!puedeAvanzar}>Siguiente <ArrowRight size={18} /></button>}
+      </div>
+    </section>
+  )
+}
+
+function GuidedOfferFlow({ oferta, setOferta, paso, setPaso, guardar }: {
+  oferta: {
+    modo: TipoOferta
+    nombre: string
+    necesidad: Necesidad
+    ubicacion: string
+    cantidad: string
+    disponibilidad: string
+    contacto: string
+  }
+  setOferta: (valor: typeof oferta) => void
+  paso: PasoOferta
+  setPaso: (paso: PasoOferta) => void
+  guardar: () => void
+}) {
+  const indice = pasosOferta.indexOf(paso)
+  const puedeAvanzar =
+    paso === 'oferta' ? Boolean(oferta.nombre.trim()) :
+      paso === 'ubicacion' ? Boolean(oferta.ubicacion.trim()) :
+        paso === 'cantidad' ? Boolean(oferta.cantidad.trim()) :
+          paso === 'disponibilidad' ? Boolean(oferta.disponibilidad.trim()) :
+            paso === 'contacto' ? Boolean(oferta.contacto.trim()) : true
+  const siguiente = () => setPaso(pasosOferta[Math.min(indice + 1, pasosOferta.length - 1)])
+  const anterior = () => setPaso(pasosOferta[Math.max(indice - 1, 0)])
+
+  return (
+    <section className="guided-panel wizard">
+      <div className="wizard-progress">
+        <span>Paso {indice + 1} de {pasosOferta.length}</span>
+        <meter min="0" max={pasosOferta.length} value={indice + 1} />
+      </div>
+
+      {paso === 'oferta' && (
+        <div className="wizard-step">
+          <h2><HandHeart size={20} /> ¿Qué puedes ofrecer?</h2>
+          <div className="template-grid">
+            {plantillaOfertas.map((plantilla) => (
+              <button
+                key={plantilla.label}
+                type="button"
+                onClick={() => setOferta({
+                  ...oferta,
+                  modo: plantilla.modo,
+                  necesidad: plantilla.necesidad,
+                  nombre: plantilla.nombre,
+                  cantidad: plantilla.cantidad,
+                })}
+              >
+                {plantilla.label}
+              </button>
+            ))}
+          </div>
+          <div className="segmented">
+            <button type="button" className={oferta.modo === 'recurso' ? 'active' : ''} onClick={() => setOferta({ ...oferta, modo: 'recurso' })}>Insumo / cupo</button>
+            <button type="button" className={oferta.modo === 'voluntario' ? 'active' : ''} onClick={() => setOferta({ ...oferta, modo: 'voluntario' })}>Equipo / voluntario</button>
+          </div>
+          <label>Nombre corto<input autoFocus value={oferta.nombre} onChange={(e) => setOferta({ ...oferta, nombre: e.target.value })} placeholder="Ej. Agua potable, camión, cuadrilla, radio VHF" /></label>
+          <label>Tipo<select value={oferta.necesidad} onChange={(e) => setOferta({ ...oferta, necesidad: e.target.value as Necesidad })}>{necesidades.map((item) => <option key={item} value={item}>{necesidadLabel[item]}</option>)}</select></label>
+        </div>
+      )}
+
+      {paso === 'ubicacion' && (
+        <div className="wizard-step">
+          <h2><MapPinned size={20} /> ¿Dónde está disponible?</h2>
+          <label>Municipio, barrio o punto de salida<input autoFocus value={oferta.ubicacion} onChange={(e) => setOferta({ ...oferta, ubicacion: e.target.value })} placeholder="Ej. Cali norte, Manizales, bodega municipal" /></label>
+          <p className="helper">Usa una referencia operativa, no una dirección privada completa.</p>
+        </div>
+      )}
+
+      {paso === 'cantidad' && (
+        <div className="wizard-step">
+          <h2><PackageCheck size={20} /> ¿Cuánto hay o cuántas personas pueden ayudar?</h2>
+          <label>Cantidad o capacidad<input autoFocus value={oferta.cantidad} onChange={(e) => setOferta({ ...oferta, cantidad: e.target.value })} placeholder="Ej. 5.000 L, 2 camiones, 8 voluntarios, 40 cupos" /></label>
+        </div>
+      )}
+
+      {paso === 'disponibilidad' && (
+        <div className="wizard-step">
+          <h2><Truck size={20} /> ¿Desde cuándo y por cuánto tiempo?</h2>
+          <label>Disponibilidad<input autoFocus value={oferta.disponibilidad} onChange={(e) => setOferta({ ...oferta, disponibilidad: e.target.value })} placeholder="Ej. ahora, 6 horas, mañana 8 a. m., esta noche" /></label>
+        </div>
+      )}
+
+      {paso === 'contacto' && (
+        <div className="wizard-step">
+          <h2><Radio size={20} /> ¿A quién contactan?</h2>
+          <label>Contacto operativo<input autoFocus value={oferta.contacto} onChange={(e) => setOferta({ ...oferta, contacto: e.target.value })} placeholder="Ej. radio logística, enlace de bodega, teléfono operativo" /></label>
+          <p className="helper">Este dato se guarda solo en este navegador hasta que exportes o copies.</p>
+        </div>
+      )}
+
+      {paso === 'revision' && (
+        <div className="wizard-step review-card">
+          <h2><CheckCircle2 size={20} /> Revisar y registrar</h2>
+          <MiniRow title={oferta.modo === 'recurso' ? 'Recurso' : 'Equipo / voluntario'} body={`${oferta.nombre || 'Sin nombre'} · ${necesidadLabel[oferta.necesidad]}`} status={oferta.modo} />
+          <MiniRow title="Lugar" body={oferta.ubicacion || 'Ubicación por confirmar'} status={oferta.disponibilidad || 'sin horario'} />
+          <MiniRow title="Cantidad" body={oferta.cantidad || 'Cantidad por confirmar'} status={oferta.contacto || 'sin contacto'} />
+        </div>
+      )}
+
+      <div className="wizard-actions">
+        <button type="button" onClick={anterior} disabled={indice === 0}><ArrowLeft size={18} /> Atrás</button>
+        {paso === 'revision'
+          ? <button className="primary" type="button" onClick={guardar} disabled={!oferta.nombre.trim() || !oferta.ubicacion.trim()}><CheckCircle2 size={18} /> Registrar ayuda</button>
+          : <button className="primary" type="button" onClick={siguiente} disabled={!puedeAvanzar}>Siguiente <ArrowRight size={18} /></button>}
+      </div>
+    </section>
+  )
+}
+
+function GuidedCoordination({ casos, asignaciones, seleccionarCaso, cambiarEstado, crearAsignacionSugerida, confirmarAsignacionSugerida, sugerenciaAsignacion, mensajeSugerencia, voluntarios, abrirConsola }: {
+  casos: Caso[]
+  asignaciones: Asignacion[]
+  seleccionarCaso: (caso: Caso) => void
+  cambiarEstado: (id: string, estado: Estado) => void
+  crearAsignacionSugerida: (caso: Caso) => void
+  confirmarAsignacionSugerida: () => void
+  sugerenciaAsignacion: SugerenciaAsignacion | null
+  mensajeSugerencia: string
+  voluntarios: Voluntario[]
+  abrirConsola: () => void
+}) {
+  return (
+    <section className="guided-panel">
+      <div className="panel-header">
+        <div>
+          <h2><ClipboardList size={19} /> Coordinar casos</h2>
+          <p className="helper">Etiquetas simples para decidir rápido: verificar, asignar, seguimiento o decisión.</p>
+        </div>
+        <button className="quiet" onClick={abrirConsola}><Activity size={18} /> Consola completa</button>
+      </div>
+      <div className="plain-filter-row">
+        <span>Necesita verificación</span>
+        <span>Listo para asignar</span>
+        <span>Alguien ya está yendo</span>
+        <span>Bloqueado: necesita decisión</span>
+      </div>
+      <div className="guided-case-list">
+        {casos.length ? casos.slice(0, 8).map((caso) => {
+          const asignacion = asignaciones.find((item) => item.casoId === caso.id)
+          const estadoSimple = asignacion?.estado === 'bloqueado' ? 'Bloqueado: necesita decisión' : estadoAccionLabel[caso.estado]
+          const sugerenciaActiva = sugerenciaAsignacion?.casoId === caso.id
+          const equipoSugerido = sugerenciaActiva ? voluntarios.find((item) => item.id === sugerenciaAsignacion.equipoId) : null
+          return (
+            <article key={caso.id} className={`guided-case ${caso.prioridad}`}>
+              <button type="button" className="case-main" onClick={() => seleccionarCaso(caso)}>
+                <strong>{caso.municipio} · {necesidadLabel[caso.necesidad]}</strong>
+                <p>{caso.notas}</p>
+                <div className="meta"><span>{estadoSimple}</span><span>{prioridadLabel[caso.prioridad]}</span><span>{caso.personas} personas</span></div>
+              </button>
+              <div className="guided-case-actions">
+                <button onClick={() => cambiarEstado(caso.id, 'verificado')} disabled={caso.estado !== 'nuevo'}><CheckCircle2 size={16} /> Verificado</button>
+                <button className="primary" onClick={() => crearAsignacionSugerida(caso)} disabled={caso.estado === 'asignado' || caso.estado === 'resuelto'}><Truck size={16} /> Sugerir equipo</button>
+              </div>
+              {sugerenciaActiva && equipoSugerido && (
+                <div className="assignment-confirm">
+                  <strong>Asignación sugerida</strong>
+                  <p>{equipoSugerido.nombre} · ETA {sugerenciaAsignacion.eta}</p>
+                  {caso.estado !== 'verificado' && <small>Verifica este caso antes de asignar.</small>}
+                  <button className="primary" onClick={confirmarAsignacionSugerida} disabled={caso.estado !== 'verificado'}><CheckCircle2 size={16} /> Confirmar asignación</button>
+                </div>
+              )}
+            </article>
+          )
+        }) : <Empty text="No hay casos abiertos para coordinar." />}
+        {mensajeSugerencia && <div className="empty visible-message">{mensajeSugerencia}</div>}
+      </div>
+    </section>
+  )
+}
+
+function GuidedSitrep({ texto, formato, setFormato, copiado, setCopiado }: { texto: string; formato: SitrepFormato; setFormato: (formato: SitrepFormato) => void; copiado: boolean; setCopiado: (valor: boolean) => void }) {
+  return (
+    <section className="guided-panel sitrep-panel">
+      <h2><Send size={19} /> Crear reporte para compartir</h2>
+      <p className="helper">Elige formato, copia y abre en el teléfono que tenga señal. Revisa antes de enviar por canales públicos.</p>
+      <div className="segmented">
+        <button className={formato === 'whatsapp' ? 'active' : ''} onClick={() => setFormato('whatsapp')}>WhatsApp</button>
+        <button className={formato === 'radio' ? 'active' : ''} onClick={() => setFormato('radio')}>Radio</button>
+        <button className={formato === 'email' ? 'active' : ''} onClick={() => setFormato('email')}>Email</button>
+      </div>
+      <textarea className="sitrep big" value={texto} readOnly rows={7} />
+      <button
+        className="primary wide"
+        onClick={() => {
+          navigator.clipboard?.writeText(texto)
+          setCopiado(true)
+          window.setTimeout(() => setCopiado(false), 1800)
+        }}
+      >
+        <Copy size={18} /> {copiado ? 'Reporte copiado' : 'Copiar reporte'}
+      </button>
+    </section>
   )
 }
 
@@ -806,7 +1561,7 @@ function CasoFila({ caso, activo, onEstado, onSeleccionar }: { caso: Caso; activ
   )
 }
 
-function CasoDetalle({ caso, asignaciones, solicitudes, equipos, recursos, albergues, onEstado, onAsignar }: {
+function CasoDetalle({ caso, asignaciones, solicitudes, equipos, recursos, albergues, onEstado, onAsignacionSugerida, onConfirmarAsignacion, sugerenciaAsignacion, mensajeSugerencia, voluntarios, onAsignar }: {
   caso: Caso | null
   asignaciones: Asignacion[]
   solicitudes: Solicitud[]
@@ -814,6 +1569,11 @@ function CasoDetalle({ caso, asignaciones, solicitudes, equipos, recursos, alber
   recursos: Recurso[]
   albergues: Albergue[]
   onEstado: (id: string, estado: Estado) => void
+  onAsignacionSugerida: (caso: Caso) => void
+  onConfirmarAsignacion: () => void
+  sugerenciaAsignacion: SugerenciaAsignacion | null
+  mensajeSugerencia: string
+  voluntarios: Voluntario[]
   onAsignar: (caso: Caso) => void
 }) {
   if (!caso) {
@@ -821,6 +1581,8 @@ function CasoDetalle({ caso, asignaciones, solicitudes, equipos, recursos, alber
   }
   const asignacionCaso = asignaciones.find((item) => item.casoId === caso.id)
   const solicitudesCaso = solicitudes.filter((item) => item.casoId === caso.id)
+  const sugerenciaActiva = sugerenciaAsignacion?.casoId === caso.id
+  const equipoSugerido = sugerenciaActiva ? voluntarios.find((item) => item.id === sugerenciaAsignacion.equipoId) : null
   return (
     <section className="panel detail-panel">
       <div className="detail-head">
@@ -854,8 +1616,18 @@ function CasoDetalle({ caso, asignaciones, solicitudes, equipos, recursos, alber
 
       <div className="quick-actions">
         <button onClick={() => onEstado(caso.id, 'verificado')} disabled={caso.estado !== 'nuevo'}><CheckCircle2 size={17} /> Marcar verificado</button>
-        <button className="primary" onClick={() => onAsignar(caso)}><Truck size={17} /> Preparar asignación</button>
+        <button className="primary" onClick={() => onAsignacionSugerida(caso)} disabled={caso.estado === 'asignado' || caso.estado === 'resuelto'}><Truck size={17} /> Sugerir equipo</button>
+        <button onClick={() => onAsignar(caso)}><ClipboardList size={17} /> Editar asignación</button>
       </div>
+      {equipoSugerido && (
+        <div className="assignment-confirm">
+          <strong>Confirmar antes de asignar</strong>
+          <p>Asignar {caso.id} a {equipoSugerido.nombre} con ETA {sugerenciaAsignacion?.eta}?</p>
+          {caso.estado !== 'verificado' && <small>Este caso debe estar verificado antes de crear la asignación.</small>}
+          <button className="primary" onClick={onConfirmarAsignacion} disabled={caso.estado !== 'verificado'}><CheckCircle2 size={17} /> Confirmar asignación</button>
+        </div>
+      )}
+      {mensajeSugerencia && !equipoSugerido && <div className="empty visible-message">{mensajeSugerencia}</div>}
 
       <h2><PackageCheck size={19} /> Solicitudes del caso</h2>
       <div className="stack tight">
@@ -1207,12 +1979,7 @@ function Assignments({ asignaciones, solicitudes, casos, voluntarios, casoActivo
   )
 }
 
-function Sitrep({ casos }: { casos: Caso[] }) {
-  const abiertos = casos.filter((caso) => caso.estado !== 'resuelto')
-  const criticos = abiertos.filter((caso) => caso.prioridad === 'critica')
-  const sinAsignar = abiertos.filter((caso) => caso.estado === 'nuevo' || caso.estado === 'verificado')
-  const texto = `SITREP Colombia: ${abiertos.length} casos abiertos, ${criticos.length} críticos, ${sinAsignar.length} sin asignar. Prioridades: salud, albergue, agua y comunicaciones. Exportar solo datos verificados; revisar información sensible antes de compartir.`
-
+function Sitrep({ texto }: { texto: string }) {
   return (
     <section className="panel">
       <h2><FileDown size={19} /> SITREP y exportación segura</h2>

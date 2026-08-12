@@ -9,8 +9,11 @@ Tema visual construido con la línea sobria de Lulo Studios: fondo oscuro, tarje
 ```bash
 npm install
 npm run dev
+npm test
 npm run build
 ```
+
+`npm test` ejecuta pruebas de componente con Vitest, Testing Library y jsdom para el inicio guiado, reportes, ofertas de ayuda, asignaciones, CRUD operativo y exportación JSON.
 
 ## Qué hace
 
